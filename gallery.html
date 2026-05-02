@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Gallery | Krupa Parihar</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Epilogue:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+    /* ============================================================
+       RESET & ROOT
+    ============================================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg:         #060608;
+        --bg2:        #0b0c12;
+        --accent:     #ff3d3d;
+        --accent2:    #ff7a3d;
+        --gold:       #d4af37;
+        --text:       #f0f0f0;
+        --text-dim:   #7a7a8a;
+        --text-mid:   #b0b0c0;
+        --g1: rgba(255,255,255,0.025);
+        --g2: rgba(255,255,255,0.05);
+        --r: 2rem;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Epilogue', sans-serif;
+        overflow-x: hidden;
+        line-height: 1.6;
+        cursor: none;
+        min-height: 100vh;
+    }
+
+    /* ============================================================
+       NOISE OVERLAY
+    ============================================================ */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0.025;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        background-size: 128px 128px;
+    }
+
+    /* ============================================================
+       CUSTOM CURSOR
+    ============================================================ */
+    #cursor-dot {
+        position: fixed;
+        width: 8px; height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 99999;
+        transform: translate(-50%,-50%);
+        transition: width 0.2s, height 0.2s, background 0.2s;
+        mix-blend-mode: difference;
+    }
+    #cursor-ring {
+        position: fixed;
+        width: 36px; height: 36px;
+        border: 1.5px solid rgba(255,61,61,0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 99998;
+        transform: translate(-50%,-50%);
+        transition: width 0.35s cubic-bezier(0.19,1,0.22,1),
+                    height 0.35s cubic-bezier(0.19,1,0.22,1),
+                    border-color 0.3s;
+    }
+    body.hovering #cursor-dot { width: 16px; height: 16px; }
+    body.hovering #cursor-ring { width: 56px; height: 56px; border-color: rgba(255,61,61,0.9); }
+
+    /* ============================================================
+       THREE.JS BG
+    ============================================================ */
+    #three-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+    }
+
+    /* ============================================================
+       SCROLLBAR
+    ============================================================ */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+    /* ============================================================
+       NAVBAR
+    ============================================================ */
+    .navbar {
+        position: fixed; top: 0; width: 100%;
+        z-index: 1000; padding: 1.1rem 0;
+        background: rgba(6,6,8,0.6);
+        backdrop-filter: blur(30px) saturate(200%);
+        -webkit-backdrop-filter: blur(30px) saturate(200%);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        transition: background 0.4s;
+    }
+    .nav-inner {
+        display: flex; justify-content: space-between; align-items: center;
+        max-width: 1300px; margin: 0 auto; padding: 0 2.5rem;
+    }
+    .logo {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.35rem; font-weight: 800;
+        color: #fff; text-decoration: none; letter-spacing: 1px;
+    }
+    .logo span { color: var(--accent); }
+    .nav-back {
+        display: flex; align-items: center; gap: 0.6rem;
+        color: var(--text-dim); text-decoration: none;
+        font-size: 0.78rem; text-transform: uppercase;
+        letter-spacing: 1.5px; font-weight: 500;
+        font-family: 'Syne', sans-serif;
+        padding: 0.55rem 1.2rem; border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        transition: all 0.3s cubic-bezier(0.19,1,0.22,1);
+    }
+    .nav-back:hover {
+        color: #fff; border-color: rgba(255,61,61,0.4);
+        background: rgba(255,61,61,0.08);
+        transform: translateX(-3px);
+    }
+    .nav-back i { transition: transform 0.3s; font-size: 0.7rem; }
+    .nav-back:hover i { transform: translateX(-4px); }
+
+    /* ============================================================
+       HERO HEADER
+    ============================================================ */
+    .page-hero {
+        padding: 180px 0 100px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-hero-blob {
+        position: absolute; border-radius: 50%;
+        filter: blur(100px); pointer-events: none;
+    }
+    .ph-blob1 {
+        width: 700px; height: 400px;
+        background: radial-gradient(ellipse, rgba(255,61,61,0.1), transparent 70%);
+        top: 50px; left: 50%; transform: translateX(-50%);
+        animation: blobDrift 12s ease-in-out infinite;
+    }
+    .ph-blob2 {
+        width: 400px; height: 300px;
+        background: radial-gradient(ellipse, rgba(212,175,55,0.07), transparent 70%);
+        bottom: 0; right: 10%;
+        animation: blobDrift 9s ease-in-out infinite reverse;
+    }
+    @keyframes blobDrift {
+        0%,100% { transform: translate(0,0) scale(1); }
+        33% { transform: translate(20px,-15px) scale(1.05); }
+        66% { transform: translate(-15px,10px) scale(0.97); }
+    }
+
+    .page-hero-inner { position: relative; z-index: 2; }
+
+    .page-badge {
+        display: inline-flex; align-items: center; gap: 10px;
+        color: var(--accent); font-weight: 700; letter-spacing: 3px;
+        text-transform: uppercase; font-size: 0.72rem;
+        font-family: 'Syne', sans-serif; margin-bottom: 1.5rem;
+    }
+    .page-badge::before, .page-badge::after {
+        content: ''; width: 30px; height: 1px; background: var(--accent);
+    }
+
+    .page-title {
+        font-family: 'Syne', sans-serif;
+        font-size: clamp(3rem, 7vw, 6rem);
+        font-weight: 800; line-height: 1;
+        letter-spacing: -2px; margin-bottom: 1.2rem;
+    }
+    .page-title .grd {
+        background: linear-gradient(135deg, #fff 30%, var(--accent) 70%, var(--accent2) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .page-subtitle {
+        color: var(--text-dim); font-size: 1rem;
+        letter-spacing: 1.5px; max-width: 500px; margin: 0 auto;
+        font-weight: 300;
+    }
+
+    /* Decorative lines */
+    .deco-line {
+        width: 1px; height: 60px;
+        background: linear-gradient(180deg, transparent, var(--accent), transparent);
+        margin: 2rem auto 0;
+        animation: linePulse 2s ease-in-out infinite;
+    }
+    @keyframes linePulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    /* ============================================================
+       GALLERY WRAPPER
+    ============================================================ */
+    .gallery-wrapper {
+        max-width: 1300px; margin: 0 auto;
+        padding: 0 2rem 8rem;
+    }
+
+    /* ============================================================
+       SECTION LABEL
+    ============================================================ */
+    .gallery-section { margin-bottom: 6rem; }
+
+    .section-label {
+        display: flex; align-items: center; gap: 1.2rem;
+        margin-bottom: 3rem;
+    }
+    .section-label-line {
+        flex: 1; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08));
+    }
+    .section-label-inner {
+        display: flex; align-items: center; gap: 0.8rem;
+    }
+    .section-num {
+        font-family: 'Syne', sans-serif; font-size: 0.65rem;
+        font-weight: 800; color: var(--accent); letter-spacing: 3px;
+        text-transform: uppercase;
+    }
+    .section-name {
+        font-family: 'Syne', sans-serif; font-size: 1.6rem;
+        font-weight: 800; color: var(--text);
+    }
+    .section-name span { color: var(--accent); }
+    .section-count {
+        background: rgba(255,61,61,0.12); border: 1px solid rgba(255,61,61,0.25);
+        border-radius: 50px; padding: 4px 12px;
+        font-size: 0.65rem; font-family: 'Syne', sans-serif;
+        color: var(--accent); font-weight: 700; letter-spacing: 1px;
+    }
+
+    /* ============================================================
+       MASONRY-FEEL GRID
+    ============================================================ */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.2rem;
+    }
+
+    /* PCCOE: 5 images – varied layout */
+    .gi-pccoe-1 { grid-column: span 5; grid-row: span 2; }
+    .gi-pccoe-2 { grid-column: span 4; grid-row: span 1; }
+    .gi-pccoe-3 { grid-column: span 3; grid-row: span 1; }
+    .gi-pccoe-4 { grid-column: span 4; grid-row: span 1; }
+    .gi-pccoe-5 { grid-column: span 3; grid-row: span 1; }
+
+    /* JOURNEY: 10 images – varied layout */
+    .gi-j-1  { grid-column: span 4; grid-row: span 2; }
+    .gi-j-2  { grid-column: span 5; grid-row: span 1; }
+    .gi-j-3  { grid-column: span 3; grid-row: span 1; }
+    .gi-j-4  { grid-column: span 3; grid-row: span 1; }
+    .gi-j-5  { grid-column: span 5; grid-row: span 1; }
+    .gi-j-6  { grid-column: span 4; grid-row: span 2; }
+    .gi-j-7  { grid-column: span 4; grid-row: span 1; }
+    .gi-j-8  { grid-column: span 4; grid-row: span 1; }
+    .gi-j-9  { grid-column: span 4; grid-row: span 1; }
+    .gi-j-10 { grid-column: span 4; grid-row: span 1; }
+
+    /* ============================================================
+       GALLERY ITEM (glass card)
+    ============================================================ */
+    .gallery-item {
+        position: relative; border-radius: 20px; overflow: hidden;
+        min-height: 240px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        cursor: pointer;
+        transform-style: preserve-3d;
+        will-change: transform;
+        transition: transform 0.5s cubic-bezier(0.19,1,0.22,1),
+                    border-color 0.4s,
+                    box-shadow 0.5s;
+        /* reveal */
+        opacity: 0;
+        transform: translateY(50px) scale(0.97);
+    }
+    .gallery-item.revealed {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    /* Glass top-edge highlight */
+    .gallery-item::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%, rgba(255,255,255,0.35) 30%,
+            rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.35) 70%,
+            transparent 100%);
+        z-index: 3; pointer-events: none;
+    }
+
+    .gallery-item img {
+        width: 100%; height: 100%; object-fit: cover;
+        display: block;
+        transition: transform 0.7s cubic-bezier(0.19,1,0.22,1), filter 0.5s;
+        filter: brightness(0.88) saturate(0.9);
+    }
+
+    /* Gradient overlay */
+    .gallery-item .overlay {
+        position: absolute; inset: 0; z-index: 2;
+        background: linear-gradient(
+            160deg,
+            rgba(6,6,8,0) 0%,
+            rgba(6,6,8,0.15) 50%,
+            rgba(6,6,8,0.75) 100%
+        );
+        transition: opacity 0.5s;
+    }
+
+    /* Label on hover */
+    .gallery-item .label {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        z-index: 4; padding: 1.4rem 1.2rem;
+        transform: translateY(20px); opacity: 0;
+        transition: transform 0.5s cubic-bezier(0.19,1,0.22,1), opacity 0.4s;
+    }
+    .gallery-item .label span {
+        font-family: 'Syne', sans-serif; font-size: 0.78rem;
+        font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+        color: rgba(255,255,255,0.9);
+        background: rgba(255,61,61,0.18);
+        border: 1px solid rgba(255,61,61,0.35);
+        padding: 5px 14px; border-radius: 50px;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Shine sweep */
+    .gallery-item .shine {
+        position: absolute; top: 0; left: -100%;
+        width: 60%; height: 100%; z-index: 4;
+        background: linear-gradient(
+            105deg,
+            transparent 0%,
+            rgba(255,255,255,0.06) 40%,
+            rgba(255,255,255,0.12) 50%,
+            rgba(255,255,255,0.06) 60%,
+            transparent 100%
+        );
+        transition: left 0.7s cubic-bezier(0.19,1,0.22,1);
+        pointer-events: none;
+    }
+
+    /* Glow border */
+    .gallery-item:hover {
+        border-color: rgba(255,61,61,0.4);
+        box-shadow:
+            0 0 0 1px rgba(255,61,61,0.1),
+            0 20px 60px rgba(0,0,0,0.6),
+            0 0 40px rgba(255,61,61,0.12),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .gallery-item:hover img {
+        transform: scale(1.07);
+        filter: brightness(0.75) saturate(1.1);
+    }
+    .gallery-item:hover .label { transform: translateY(0); opacity: 1; }
+    .gallery-item:hover .shine { left: 130%; }
+
+    /* Expand icon */
+    .gallery-item .expand-icon {
+        position: absolute; top: 1rem; right: 1rem; z-index: 5;
+        width: 36px; height: 36px; border-radius: 50%;
+        background: rgba(6,6,8,0.7); backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.12);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,0.7); font-size: 0.7rem;
+        transform: scale(0) rotate(-45deg); opacity: 0;
+        transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+    }
+    .gallery-item:hover .expand-icon {
+        transform: scale(1) rotate(0deg); opacity: 1;
+    }
+
+    /* ============================================================
+       LIGHTBOX
+    ============================================================ */
+    #lightbox {
+        position: fixed; inset: 0; z-index: 99990;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; pointer-events: none;
+        transition: opacity 0.4s cubic-bezier(0.19,1,0.22,1);
+    }
+    #lightbox.open { opacity: 1; pointer-events: all; }
+
+    .lb-backdrop {
+        position: absolute; inset: 0;
+        background: rgba(4,4,6,0.94);
+        backdrop-filter: blur(24px) saturate(120%);
+        -webkit-backdrop-filter: blur(24px) saturate(120%);
+    }
+
+    .lb-inner {
+        position: relative; z-index: 2;
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem; width: 100%; max-width: 1100px; height: 100vh;
+    }
+
+    .lb-frame {
+        position: relative;
+        max-width: 90vw; max-height: 85vh;
+        border-radius: 24px; overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow:
+            0 0 0 1px rgba(255,61,61,0.15),
+            0 40px 120px rgba(0,0,0,0.8),
+            0 0 80px rgba(255,61,61,0.08);
+        transform: scale(0.85) translateY(30px);
+        transition: transform 0.5s cubic-bezier(0.34,1.4,0.64,1);
+    }
+    #lightbox.open .lb-frame {
+        transform: scale(1) translateY(0);
+    }
+
+    /* Glass edge highlight on lightbox */
+    .lb-frame::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%, rgba(255,255,255,0.4) 40%,
+            rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 60%,
+            transparent 100%);
+        z-index: 5;
+    }
+
+    #lb-img {
+        display: block; max-width: 88vw; max-height: 80vh;
+        object-fit: contain;
+    }
+
+    .lb-caption {
+        position: absolute; bottom: 0; left: 0; right: 0; z-index: 4;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(transparent, rgba(6,6,8,0.95));
+        font-family: 'Syne', sans-serif; font-size: 0.8rem;
+        letter-spacing: 2px; text-transform: uppercase;
+        color: rgba(255,255,255,0.7);
+    }
+
+    .lb-close {
+        position: fixed; top: 1.5rem; right: 2rem; z-index: 99995;
+        width: 48px; height: 48px; border-radius: 50%;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,0.7); font-size: 1.1rem;
+        cursor: none; transition: all 0.3s;
+        backdrop-filter: blur(12px);
+    }
+    .lb-close:hover {
+        background: rgba(255,61,61,0.2); border-color: rgba(255,61,61,0.5);
+        color: white; transform: rotate(90deg) scale(1.1);
+    }
+
+    /* Prev/Next */
+    .lb-nav {
+        position: fixed; top: 50%; z-index: 99994;
+        transform: translateY(-50%);
+        width: 52px; height: 52px; border-radius: 50%;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,0.6); font-size: 1rem;
+        cursor: none; transition: all 0.3s;
+        backdrop-filter: blur(12px);
+    }
+    .lb-nav:hover {
+        background: rgba(255,61,61,0.15);
+        border-color: rgba(255,61,61,0.4);
+        color: white; transform: translateY(-50%) scale(1.1);
+    }
+    #lb-prev { left: 1.5rem; }
+    #lb-next { right: 1.5rem; }
+
+    /* Counter */
+    .lb-counter {
+        position: fixed; bottom: 2rem; left: 50%;
+        transform: translateX(-50%);
+        z-index: 99994;
+        font-family: 'Syne', sans-serif; font-size: 0.68rem;
+        letter-spacing: 3px; color: var(--text-dim);
+        background: rgba(6,6,8,0.7); backdrop-filter: blur(10px);
+        padding: 6px 20px; border-radius: 50px;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    .gal-footer {
+        text-align: center; padding: 3rem 2rem 5rem;
+        color: var(--text-dim); font-size: 0.82rem;
+        border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .gal-footer a {
+        color: var(--accent); text-decoration: none;
+        font-family: 'Syne', sans-serif; font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .gal-footer a:hover { text-decoration: underline; }
+
+    /* ============================================================
+       AMBIENT LIGHT ACCENT
+    ============================================================ */
+    .ambient-orb {
+        position: fixed; border-radius: 50%;
+        filter: blur(120px); pointer-events: none; z-index: -1;
+        animation: orbDrift 15s ease-in-out infinite;
+    }
+    .orb-1 {
+        width: 600px; height: 600px; top: -200px; right: -100px;
+        background: radial-gradient(circle, rgba(255,61,61,0.06), transparent 60%);
+        animation-duration: 18s;
+    }
+    .orb-2 {
+        width: 500px; height: 500px; bottom: 20%; left: -150px;
+        background: radial-gradient(circle, rgba(212,175,55,0.05), transparent 60%);
+        animation-duration: 12s; animation-delay: -6s;
+    }
+    @keyframes orbDrift {
+        0%,100% { transform: translate(0,0); }
+        33% { transform: translate(30px,-40px); }
+        66% { transform: translate(-20px,20px); }
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 1100px) {
+        .gi-pccoe-1 { grid-column: span 6; }
+        .gi-pccoe-2 { grid-column: span 6; }
+        .gi-pccoe-3 { grid-column: span 4; }
+        .gi-pccoe-4 { grid-column: span 4; }
+        .gi-pccoe-5 { grid-column: span 4; }
+        .gi-j-1  { grid-column: span 6; }
+        .gi-j-2  { grid-column: span 6; }
+        .gi-j-3  { grid-column: span 6; }
+        .gi-j-4  { grid-column: span 6; }
+        .gi-j-5  { grid-column: span 6; }
+        .gi-j-6  { grid-column: span 6; }
+        .gi-j-7  { grid-column: span 6; }
+        .gi-j-8  { grid-column: span 6; }
+        .gi-j-9  { grid-column: span 6; }
+        .gi-j-10 { grid-column: span 6; }
+    }
+    @media (max-width: 700px) {
+        .gallery-grid { grid-template-columns: repeat(2,1fr); gap: 0.75rem; }
+        .gi-pccoe-1, .gi-pccoe-2, .gi-pccoe-3, .gi-pccoe-4, .gi-pccoe-5,
+        .gi-j-1, .gi-j-2, .gi-j-3, .gi-j-4, .gi-j-5,
+        .gi-j-6, .gi-j-7, .gi-j-8, .gi-j-9, .gi-j-10 {
+            grid-column: span 1; grid-row: span 1;
+        }
+        .gallery-item { min-height: 180px; }
+        .page-title { letter-spacing: -1px; }
+        .section-name { font-size: 1.2rem; }
+    }
+    @media (max-width: 400px) {
+        .gallery-grid { grid-template-columns: 1fr; }
+        .gi-pccoe-1, .gi-pccoe-2, .gi-pccoe-3, .gi-pccoe-4, .gi-pccoe-5,
+        .gi-j-1, .gi-j-2, .gi-j-3, .gi-j-4, .gi-j-5,
+        .gi-j-6, .gi-j-7, .gi-j-8, .gi-j-9, .gi-j-10 {
+            grid-column: span 1;
+        }
+    }
+    </style>
+</head>
+<body>
+
+<!-- Ambient Orbs -->
+<div class="ambient-orb orb-1"></div>
+<div class="ambient-orb orb-2"></div>
+
+<!-- Custom Cursor -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- Three.js BG -->
+<canvas id="three-bg"></canvas>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav class="navbar">
+    <div class="nav-inner">
+        <a href="index.html" class="logo">Creative Mind<span>.</span></a>
+        <a href="index.html" class="nav-back">
+            <i class="fas fa-arrow-left"></i> Back to Portfolio
+        </a>
+    </div>
+</nav>
+
+<!-- ===================== PAGE HERO ===================== -->
+<div class="page-hero">
+    <div class="page-hero-blob ph-blob1"></div>
+    <div class="page-hero-blob ph-blob2"></div>
+    <div class="page-hero-inner">
+        <div class="page-badge">Krupa Parihar · Portfolio</div>
+        <h1 class="page-title"><span class="grd">Visual Gallery</span></h1>
+        <p class="page-subtitle">Moments, places, and the journey so far</p>
+        <div class="deco-line"></div>
+    </div>
+</div>
+
+<!-- ===================== GALLERY ===================== -->
+<div class="gallery-wrapper">
+
+    <!-- SECTION 1: PCCOE Life -->
+    <section class="gallery-section">
+        <div class="section-label">
+            <div class="section-label-inner">
+                <span class="section-num">01</span>
+                <h2 class="section-name">PCCOE <span>Life</span></h2>
+                <span class="section-count">5 Photos</span>
+            </div>
+            <div class="section-label-line"></div>
+        </div>
+
+        <div class="gallery-grid" id="pccoe-grid">
+            <div class="gallery-item gi-pccoe-1" data-src="pccoe.1.jpg" data-label="PCCOE Life · 01">
+                <img src="pccoe.1.jpg" alt="PCCOE Life 1" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>PCCOE Life</span></div>
+            </div>
+            <div class="gallery-item gi-pccoe-2" data-src="pccoe.2.jpg" data-label="PCCOE Life · 02">
+                <img src="pccoe.2.jpg" alt="PCCOE Life 2" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>PCCOE Life</span></div>
+            </div>
+            <div class="gallery-item gi-pccoe-3" data-src="pccoe.3.jpg" data-label="PCCOE Life · 03">
+                <img src="pccoe.3.jpg" alt="PCCOE Life 3" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>PCCOE Life</span></div>
+            </div>
+            <div class="gallery-item gi-pccoe-4" data-src="pccoe.4.jpg" data-label="PCCOE Life · 04">
+                <img src="pccoe.4.jpg" alt="PCCOE Life 4" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>PCCOE Life</span></div>
+            </div>
+            <div class="gallery-item gi-pccoe-5" data-src="pccoe.5.jpg" data-label="PCCOE Life · 05">
+                <img src="pccoe.5.jpg" alt="PCCOE Life 5" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>PCCOE Life</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: Journey & Creation -->
+    <section class="gallery-section">
+        <div class="section-label">
+            <div class="section-label-inner">
+                <span class="section-num">02</span>
+                <h2 class="section-name">Journey <span>& Creation</span></h2>
+                <span class="section-count">10 Photos</span>
+            </div>
+            <div class="section-label-line"></div>
+        </div>
+
+        <div class="gallery-grid" id="journey-grid">
+            <div class="gallery-item gi-j-1" data-src="journey.1.jpg" data-label="Journey · 01">
+                <img src="journey.1.jpg" alt="Journey 1" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-2" data-src="journey.2.jpg" data-label="Journey · 02">
+                <img src="journey.2.jpg" alt="Journey 2" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-3" data-src="journey.3.jpg" data-label="Journey · 03">
+                <img src="journey.3.jpg" alt="Journey 3" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-4" data-src="journey.4.jpg" data-label="Journey · 04">
+                <img src="journey.4.jpg" alt="Journey 4" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-5" data-src="journey.5.jpg" data-label="Journey · 05">
+                <img src="journey.5.jpg" alt="Journey 5" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-6" data-src="journey.6.jpg" data-label="Journey · 06">
+                <img src="journey.6.jpg" alt="Journey 6" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-7" data-src="journey.7.jpg" data-label="Journey · 07">
+                <img src="journey.7.jpg" alt="Journey 7" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-8" data-src="journey.8.jpg" data-label="Journey · 08">
+                <img src="journey.8.jpg" alt="Journey 8" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-9" data-src="journey.9.jpg" data-label="Journey · 09">
+                <img src="journey.9.jpg" alt="Journey 9" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+            <div class="gallery-item gi-j-10" data-src="journey.10.jpg" data-label="Journey · 10">
+                <img src="journey.10.jpg" alt="Journey 10" loading="lazy">
+                <div class="overlay"></div>
+                <div class="shine"></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+                <div class="label"><span>Journey</span></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<div class="gal-footer">
+    <p>&copy; 2026 Krupa Parihar &nbsp;·&nbsp; <a href="index.html">Back to Portfolio</a></p>
+</div>
+
+<!-- ===================== LIGHTBOX ===================== -->
+<div id="lightbox">
+    <div class="lb-backdrop" id="lb-backdrop"></div>
+    <div class="lb-inner">
+        <div class="lb-frame">
+            <img id="lb-img" src="" alt="Gallery Image">
+            <div class="lb-caption" id="lb-caption"></div>
+        </div>
+    </div>
+    <button class="lb-close" id="lb-close" aria-label="Close"><i class="fas fa-times"></i></button>
+    <button class="lb-nav" id="lb-prev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+    <button class="lb-nav" id="lb-next" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+    <div class="lb-counter" id="lb-counter"></div>
+</div>
+
+<!-- ============================================================
+     SCRIPTS
+============================================================ -->
+<script>
+/* ============================================================
+   1. THREE.JS BG
+============================================================ */
+(function() {
+    const canvas = document.getElementById('three-bg');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x060608, 1);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 80;
+
+    const COUNT = 900;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(COUNT * 3);
+    const col = new Float32Array(COUNT * 3);
+    const colors = [
+        [1.0, 0.24, 0.24],
+        [0.83, 0.68, 0.22],
+        [0.31, 0.76, 0.97],
+        [0.08, 0.08, 0.1],
+    ];
+    for (let i = 0; i < COUNT; i++) {
+        pos[i*3]   = (Math.random() - 0.5) * 200;
+        pos[i*3+1] = (Math.random() - 0.5) * 200;
+        pos[i*3+2] = (Math.random() - 0.5) * 200;
+        const c = colors[Math.floor(Math.random() * colors.length)];
+        col[i*3] = c[0]; col[i*3+1] = c[1]; col[i*3+2] = c[2];
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: 0.5, vertexColors: true, transparent: true, opacity: 0.65 });
+    const points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    const gridGeo = new THREE.PlaneGeometry(300, 300, 30, 30);
+    const gridMat = new THREE.MeshBasicMaterial({ color: 0xff3d3d, wireframe: true, transparent: true, opacity: 0.012 });
+    const grid = new THREE.Mesh(gridGeo, gridMat);
+    grid.rotation.x = -Math.PI / 2;
+    grid.position.y = -50;
+    scene.add(grid);
+
+    let mx = 0, my = 0;
+    document.addEventListener('mousemove', e => {
+        mx = (e.clientX / window.innerWidth - 0.5) * 0.4;
+        my = (e.clientY / window.innerHeight - 0.5) * 0.4;
+    });
+
+    (function animate() {
+        requestAnimationFrame(animate);
+        points.rotation.y += 0.0003;
+        points.rotation.x += 0.0001;
+        camera.position.x += (mx * 20 - camera.position.x) * 0.025;
+        camera.position.y += (-my * 20 - camera.position.y) * 0.025;
+        camera.lookAt(scene.position);
+        renderer.render(scene, camera);
+    })();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+})();
+
+/* ============================================================
+   2. CUSTOM CURSOR
+============================================================ */
+const cursorDot  = document.getElementById('cursor-dot');
+const cursorRing = document.getElementById('cursor-ring');
+let dotX = 0, dotY = 0, rX = 0, rY = 0;
+
+document.addEventListener('mousemove', e => { dotX = e.clientX; dotY = e.clientY; });
+
+(function trackCursor() {
+    rX += (dotX - rX) * 0.12;
+    rY += (dotY - rY) * 0.12;
+    cursorDot.style.left  = dotX + 'px';
+    cursorDot.style.top   = dotY + 'px';
+    cursorRing.style.left = rX + 'px';
+    cursorRing.style.top  = rY + 'px';
+    requestAnimationFrame(trackCursor);
+})();
+
+document.querySelectorAll('a, button, .gallery-item').forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+});
+
+/* ============================================================
+   3. NAVBAR SCROLL TINT
+============================================================ */
+window.addEventListener('scroll', () => {
+    document.querySelector('.navbar').style.background =
+        window.scrollY > 50 ? 'rgba(6,6,8,0.92)' : 'rgba(6,6,8,0.6)';
+}, { passive: true });
+
+/* ============================================================
+   4. SCROLL REVEAL + STAGGER
+============================================================ */
+const allItems = document.querySelectorAll('.gallery-item');
+
+const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const el = entry.target;
+            const siblings = Array.from(el.parentElement.children);
+            const idx = siblings.indexOf(el);
+            setTimeout(() => {
+                el.classList.add('revealed');
+                el.style.transitionDelay = '0s';
+            }, idx * 70);
+            revealObserver.unobserve(el);
+        }
+    });
+}, { threshold: 0.06 });
+
+allItems.forEach(item => {
+    item.style.transitionDuration = '0.7s';
+    item.style.transitionProperty = 'opacity, transform, border-color, box-shadow';
+    item.style.transitionTimingFunction = 'cubic-bezier(0.19,1,0.22,1)';
+    revealObserver.observe(item);
+});
+
+/* ============================================================
+   5. 3D TILT EFFECT
+============================================================ */
+allItems.forEach(card => {
+    card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width  / 2;
+        const cy = rect.top  + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width  / 2);
+        const dy = (e.clientY - cy) / (rect.height / 2);
+        card.style.transform = `perspective(700px) rotateY(${dx * 5}deg) rotateX(${-dy * 5}deg) scale(1.02)`;
+    });
+    card.addEventListener('mouseleave', () => {
+        card.style.transition = 'transform 0.6s cubic-bezier(0.19,1,0.22,1), border-color 0.4s, box-shadow 0.5s';
+        card.style.transform = '';
+        setTimeout(() => { card.style.transition = ''; }, 600);
+    });
+});
+
+/* ============================================================
+   6. LIGHTBOX
+============================================================ */
+const lightbox  = document.getElementById('lightbox');
+const lbImg     = document.getElementById('lb-img');
+const lbCaption = document.getElementById('lb-caption');
+const lbCounter = document.getElementById('lb-counter');
+const lbClose   = document.getElementById('lb-close');
+const lbPrev    = document.getElementById('lb-prev');
+const lbNext    = document.getElementById('lb-next');
+const lbBackdrop = document.getElementById('lb-backdrop');
+
+// Build flat image array from all gallery items
+let images = [];
+allItems.forEach((item, i) => {
+    images.push({ src: item.dataset.src, label: item.dataset.label });
+});
+
+let currentIdx = 0;
+
+function openLightbox(idx) {
+    currentIdx = idx;
+    lbImg.style.opacity = '0';
+    lbImg.style.transform = 'scale(0.94)';
+    lbImg.src = images[idx].src;
+    lbImg.onload = () => {
+        lbImg.style.transition = 'opacity 0.35s, transform 0.4s cubic-bezier(0.34,1.3,0.64,1)';
+        lbImg.style.opacity = '1';
+        lbImg.style.transform = 'scale(1)';
+    };
+    lbCaption.textContent = images[idx].label;
+    lbCounter.textContent = (idx + 1) + ' / ' + images.length;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(() => { lbImg.src = ''; }, 400);
+}
+
+function goPrev() {
+    currentIdx = (currentIdx - 1 + images.length) % images.length;
+    transitionTo(currentIdx, 'left');
+}
+
+function goNext() {
+    currentIdx = (currentIdx + 1) % images.length;
+    transitionTo(currentIdx, 'right');
+}
+
+function transitionTo(idx, dir) {
+    lbImg.style.transition = 'opacity 0.2s, transform 0.25s';
+    lbImg.style.opacity = '0';
+    lbImg.style.transform = dir === 'right' ? 'translateX(-30px) scale(0.96)' : 'translateX(30px) scale(0.96)';
+    setTimeout(() => {
+        lbImg.src = images[idx].src;
+        lbCaption.textContent = images[idx].label;
+        lbCounter.textContent = (idx + 1) + ' / ' + images.length;
+        lbImg.style.transition = 'none';
+        lbImg.style.transform = dir === 'right' ? 'translateX(30px) scale(0.96)' : 'translateX(-30px) scale(0.96)';
+        requestAnimationFrame(() => {
+            lbImg.style.transition = 'opacity 0.35s, transform 0.4s cubic-bezier(0.34,1.2,0.64,1)';
+            lbImg.style.opacity = '1';
+            lbImg.style.transform = 'translateX(0) scale(1)';
+        });
+    }, 220);
+}
+
+allItems.forEach((item, i) => {
+    item.addEventListener('click', () => openLightbox(i));
+});
+
+lbClose.addEventListener('click', closeLightbox);
+lbBackdrop.addEventListener('click', closeLightbox);
+lbPrev.addEventListener('click', (e) => { e.stopPropagation(); goPrev(); });
+lbNext.addEventListener('click', (e) => { e.stopPropagation(); goNext(); });
+
+document.addEventListener('keydown', e => {
+    if (!lightbox.classList.contains('open')) return;
+    if (e.key === 'Escape')      closeLightbox();
+    if (e.key === 'ArrowLeft')   goPrev();
+    if (e.key === 'ArrowRight')  goNext();
+});
+
+/* Touch swipe for lightbox */
+let touchStartX = 0;
+lightbox.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+lightbox.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) dx < 0 ? goNext() : goPrev();
+}, { passive: true });
+</script>
+</body>
+</html>

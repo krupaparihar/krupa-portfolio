@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Mind at Work | Krupa Parihar</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Epilogue:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+    /* ============================================================
+       RESET & ROOT
+    ============================================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg:         #060608;
+        --bg2:        #0b0c12;
+        --accent:     #ff3d3d;
+        --accent2:    #ff7a3d;
+        --gold:       #d4af37;
+        --green:      #1db954;
+        --blue:       #4fc3f7;
+        --purple:     #b983ff;
+        --orange:     #ff9800;
+        --text:       #f0f0f0;
+        --text-dim:   #7a7a8a;
+        --text-mid:   #b0b0c0;
+
+        --g1: rgba(255,255,255,0.025);
+        --g2: rgba(255,255,255,0.05);
+        --g3: rgba(255,255,255,0.08);
+        --gb: rgba(255,255,255,0.07);
+        --ge: rgba(255,255,255,0.18);
+
+        --r: 2rem;
+        --r2: 1.2rem;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Epilogue', sans-serif;
+        overflow-x: hidden;
+        line-height: 1.6;
+        cursor: none;
+    }
+
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0.025;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        background-size: 128px 128px;
+    }
+
+    /* ============================================================
+       CUSTOM CURSOR
+    ============================================================ */
+    #cursor-dot {
+        position: fixed;
+        width: 8px; height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 99999;
+        transform: translate(-50%,-50%);
+        transition: width 0.2s, height 0.2s, background 0.2s;
+        mix-blend-mode: difference;
+    }
+    #cursor-ring {
+        position: fixed;
+        width: 36px; height: 36px;
+        border: 1.5px solid rgba(255,61,61,0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 99998;
+        transform: translate(-50%,-50%);
+        transition: width 0.35s cubic-bezier(0.19,1,0.22,1),
+                    height 0.35s cubic-bezier(0.19,1,0.22,1),
+                    border-color 0.3s;
+    }
+    body.hovering #cursor-dot { width: 16px; height: 16px; }
+    body.hovering #cursor-ring { width: 56px; height: 56px; border-color: rgba(255,61,61,0.9); }
+
+    #three-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+    .wrapper { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+    .section-padding { padding: 130px 0; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+
+    .glass-card {
+        position: relative;
+        background:
+            linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
+        border: 1px solid rgba(255,255,255,0.09);
+        border-radius: var(--r);
+        backdrop-filter: blur(24px) saturate(160%);
+        -webkit-backdrop-filter: blur(24px) saturate(160%);
+        overflow: hidden;
+        transition: transform 0.5s cubic-bezier(0.19,1,0.22,1),
+                    border-color 0.4s,
+                    box-shadow 0.5s;
+    }
+
+    .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255,255,255,0.35) 30%,
+            rgba(255,255,255,0.5) 50%,
+            rgba(255,255,255,0.35) 70%,
+            transparent 100%);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .glass-card::after {
+        content: '';
+        position: absolute;
+        top: -60%; left: -60%;
+        width: 40%; height: 160%;
+        background: linear-gradient(
+            105deg,
+            transparent 0%,
+            rgba(255,255,255,0.04) 40%,
+            rgba(255,255,255,0.09) 50%,
+            rgba(255,255,255,0.04) 60%,
+            transparent 100%);
+        transform: skewX(-20deg);
+        transition: left 0.8s cubic-bezier(0.19,1,0.22,1);
+        pointer-events: none;
+        z-index: 2;
+    }
+    .glass-card:hover::after { left: 130%; }
+
+    .glass-card:hover {
+        border-color: rgba(255,61,61,0.3);
+        box-shadow:
+            0 0 0 1px rgba(255,61,61,0.1),
+            0 8px 40px rgba(0,0,0,0.5),
+            inset 0 1px 0 rgba(255,255,255,0.08);
+        transform: translateY(-8px);
+    }
+
+    .glass-card > * { position: relative; z-index: 3; }
+    .glass-panel { padding: 3rem; }
+
+    /* ============================================================
+       NAVBAR
+    ============================================================ */
+    .navbar {
+        position: fixed; top: 0; width: 100%;
+        z-index: 1000; padding: 1.1rem 0;
+        background: rgba(6,6,8,0.6);
+        backdrop-filter: blur(30px) saturate(200%);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        transition: background 0.4s;
+    }
+    .nav-inner {
+        display: flex; justify-content: space-between; align-items: center;
+        max-width: 1200px; margin: 0 auto; padding: 0 2rem;
+    }
+    .logo {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.35rem; font-weight: 800;
+        color: #fff; text-decoration: none; letter-spacing: 1px;
+    }
+    .logo span { color: var(--accent); }
+    .nav-links { display: flex; list-style: none; gap: 2rem; align-items: center; }
+    .nav-links a {
+        color: var(--text-dim); text-decoration: none;
+        transition: color 0.3s; font-size: 0.78rem;
+        text-transform: uppercase; letter-spacing: 1.5px;
+        font-weight: 500;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+        background: var(--accent) !important; color: #fff !important;
+        padding: 0.55rem 1.3rem; border-radius: 8px; font-weight: 700 !important;
+        box-shadow: 0 4px 20px rgba(255,61,61,0.35);
+        transition: box-shadow 0.3s, transform 0.3s !important;
+    }
+    .nav-cta:hover { box-shadow: 0 6px 30px rgba(255,61,61,0.6) !important; transform: translateY(-2px) !important; }
+
+    .nav-gallery {
+        background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(255,122,61,0.15)) !important;
+        color: #e8c84a !important;
+        padding: 0.55rem 1.3rem; border-radius: 8px; font-weight: 700 !important;
+        border: 1px solid rgba(212,175,55,0.35) !important;
+        box-shadow: 0 4px 20px rgba(212,175,55,0.15);
+        transition: box-shadow 0.3s, transform 0.3s, background 0.3s, color 0.3s !important;
+    }
+    .nav-gallery:hover {
+        background: linear-gradient(135deg, rgba(212,175,55,0.4), rgba(255,122,61,0.3)) !important;
+        color: #fff !important;
+        box-shadow: 0 6px 30px rgba(212,175,55,0.4) !important;
+        transform: translateY(-2px) !important;
+        border-color: rgba(212,175,55,0.7) !important;
+    }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    .hero-section {
+        height: 100vh;
+        display: flex; align-items: center;
+        padding-top: 80px;
+        position: relative; overflow: hidden;
+    }
+
+    .hero-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        pointer-events: none;
+        animation: blobFloat 10s ease-in-out infinite;
+    }
+    .blob-1 {
+        width: 600px; height: 600px;
+        background: radial-gradient(circle, rgba(255,61,61,0.12), transparent 70%);
+        top: -100px; right: -100px;
+        animation-duration: 12s;
+    }
+    .blob-2 {
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(212,175,55,0.08), transparent 70%);
+        bottom: 0; left: 50px;
+        animation-duration: 9s; animation-delay: -4s;
+    }
+    @keyframes blobFloat {
+        0%,100% { transform: translate(0,0) scale(1); }
+        33% { transform: translate(30px,-20px) scale(1.05); }
+        66% { transform: translate(-20px,15px) scale(0.97); }
+    }
+
+    .hero-layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 4rem; align-items: center; }
+    .hero-badge {
+        color: var(--accent); font-weight: 700; letter-spacing: 3px;
+        text-transform: uppercase; font-size: 0.72rem; margin-bottom: 1.5rem;
+        display: flex; align-items: center; gap: 10px;
+        font-family: 'Syne', sans-serif;
+    }
+    .hero-badge::before { content: ''; width: 30px; height: 1px; background: var(--accent); }
+
+    .hero-name {
+        font-family: 'Syne', sans-serif;
+        font-size: 5.2rem; line-height: 0.95; margin-bottom: 1.5rem;
+        font-weight: 800; letter-spacing: -1px;
+    }
+    .highlight {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .hero-role {
+        font-size: 0.9rem; color: var(--text-dim); letter-spacing: 2px;
+        text-transform: uppercase; margin-bottom: 1.2rem;
+    }
+    .hero-desc { color: var(--text-mid); font-size: 1.05rem; margin-bottom: 2.5rem; max-width: 520px; font-weight: 300; }
+
+    .hero-quick-stats { display: flex; gap: 1.2rem; margin-bottom: 2.5rem; flex-wrap: wrap; }
+    .q-stat {
+        padding: 1.2rem 1.5rem;
+        border-radius: 16px;
+        border-left: 3px solid var(--accent);
+        background: linear-gradient(135deg, rgba(255,61,61,0.07), rgba(255,255,255,0.02));
+        border-top: 1px solid rgba(255,255,255,0.07);
+        border-right: 1px solid rgba(255,255,255,0.04);
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        backdrop-filter: blur(10px);
+        min-width: 140px;
+    }
+    .q-stat .val { font-size: 1.7rem; font-weight: 800; color: #fff; display: block; font-family: 'Syne', sans-serif; }
+    .q-stat .lbl { font-size: 0.62rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; display: block; }
+
+    .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-magnetic { display: inline-block; position: relative; }
+    .btn-main {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: white; padding: 1rem 2.5rem; border-radius: 50px;
+        text-decoration: none; font-weight: 700; display: inline-block;
+        transition: box-shadow 0.3s, transform 0.3s;
+        text-transform: uppercase; font-size: 0.78rem; letter-spacing: 1.5px;
+        box-shadow: 0 6px 30px rgba(255,61,61,0.4);
+        font-family: 'Syne', sans-serif;
+    }
+    .btn-main:hover { box-shadow: 0 10px 50px rgba(255,61,61,0.65); transform: translateY(-3px); }
+    .btn-outline {
+        border: 1px solid rgba(255,255,255,0.15); color: white;
+        padding: 1rem 2.5rem; border-radius: 50px; text-decoration: none;
+        transition: all 0.3s; text-transform: uppercase; font-size: 0.78rem;
+        letter-spacing: 1.5px; backdrop-filter: blur(10px);
+        background: rgba(255,255,255,0.03);
+        font-family: 'Syne', sans-serif;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,61,61,0.5); }
+
+    .hero-visual { display: flex; justify-content: center; align-items: center; position: relative; }
+
+    .img-aura {
+        position: absolute;
+        width: 420px; height: 420px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,61,61,0.25) 0%, rgba(212,175,55,0.12) 50%, transparent 70%);
+        animation: auraRotate 8s linear infinite;
+        filter: blur(20px);
+    }
+    @keyframes auraRotate {
+        from { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.1); }
+        to { transform: rotate(360deg) scale(1); }
+    }
+
+    .rotating-ring {
+        position: absolute;
+        width: 400px; height: 400px;
+        border-radius: 50%;
+        border: 1px dashed rgba(255,61,61,0.25);
+        animation: spin 20s linear infinite;
+    }
+    .rotating-ring-2 {
+        width: 370px; height: 370px;
+        border-color: rgba(212,175,55,0.2);
+        animation: spin 30s linear infinite reverse;
+    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .cool-frame {
+        width: 340px; height: 340px;
+        background: linear-gradient(135deg, var(--accent), var(--gold));
+        clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        display: flex; align-items: center; justify-content: center;
+        transition: 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+        animation: heroFloat 6s ease-in-out infinite;
+        position: relative; z-index: 2;
+        box-shadow: 0 0 60px rgba(255,61,61,0.3);
+    }
+    .cool-frame:hover { transform: scale(1.03) rotate(3deg) !important; filter: brightness(1.1); }
+    .profile-img {
+        width: 97%; height: 97%; object-fit: cover;
+        clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+    }
+    @keyframes heroFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-24px); } }
+
+    /* ============================================================
+       SECTION TITLES
+    ============================================================ */
+    .sec-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 3.2rem; margin-bottom: 2.5rem; font-weight: 800;
+        letter-spacing: -0.5px; line-height: 1;
+    }
+    .sec-title span { color: var(--accent); }
+
+    /* ============================================================
+       ABOUT ME
+    ============================================================ */
+    #about-me .glass-panel {
+        position: relative;
+        background:
+            linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+        padding: 3rem; border-radius: var(--r);
+        backdrop-filter: blur(24px);
+    }
+    #about-me p { color: var(--text-mid); line-height: 1.9; }
+    #about-me strong { color: var(--text); font-weight: 600; }
+
+    .frame-wrapper { position: relative; display: inline-block; }
+    .frame-wrapper .frame-glow {
+        position: absolute; inset: -20px;
+        border-radius: 30px;
+        background: radial-gradient(circle at 50% 50%, rgba(255,61,61,0.2), transparent 70%);
+        filter: blur(20px);
+        animation: glowPulse 4s ease-in-out infinite;
+    }
+    @keyframes glowPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+    .round-frame {
+        width: 320px; height: 320px;
+        border-radius: 28px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+        position: relative; z-index: 1;
+        transition: transform 0.5s cubic-bezier(0.19,1,0.22,1);
+    }
+    .round-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .round-frame:hover { transform: scale(1.03); }
+
+    /* ============================================================
+       PERSONALITY
+    ============================================================ */
+    .rect-frame {
+        width: 230px; height: 290px; border-radius: 20px; overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.09);
+        box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        transition: 0.4s;
+    }
+    .rect-frame:hover { transform: scale(1.04) translateY(-6px); border-color: rgba(255,61,61,0.4); }
+    .rect-img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ============================================================
+       QUOTE BOX
+    ============================================================ */
+    .quote-box {
+        margin: 1rem 0 2rem 0;
+        padding: 3rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .quote-box::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg,
+            rgba(255,61,61,0.04),
+            rgba(212,175,55,0.03),
+            transparent);
+        border-top: 1px solid rgba(255,255,255,0.06);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .quote-text {
+        font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 500;
+        color: rgba(255,255,255,0.9); line-height: 1.8; letter-spacing: 0.3px;
+        max-width: 820px; margin: 0 auto; position: relative;
+    }
+    .quote-text::before { content: '\201C'; font-size: 4rem; color: var(--accent); line-height: 0; vertical-align: -0.6em; margin-right: 6px; opacity: 0.7; }
+    .quote-text::after  { content: '\201D'; font-size: 4rem; color: var(--accent); line-height: 0; vertical-align: -0.6em; margin-left: 6px; opacity: 0.7; }
+    .quote-author { display: block; margin-top: 1.2rem; font-size: 0.78rem; color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase; }
+
+    /* ============================================================
+       TAG STYLE (kept for education section)
+    ============================================================ */
+    .tag {
+        background: rgba(255,255,255,0.03);
+        padding: 9px 18px; border-radius: 50px;
+        border: 1px solid rgba(255,255,255,0.08);
+        margin: 5px; display: inline-block; transition: 0.3s;
+        font-size: 0.78rem; letter-spacing: 0.5px;
+    }
+    .tag i { margin-right: 8px; color: var(--accent); }
+    .tag:hover {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-color: transparent; transform: scale(1.05) translateY(-2px); color: white;
+        box-shadow: 0 6px 20px rgba(255,61,61,0.35);
+    }
+    .tag:hover i { color: white; }
+
+    /* ============================================================
+       EDUCATION
+    ============================================================ */
+    .edu-item {
+        margin-bottom: 2.5rem; border-left: 2px solid rgba(255,61,61,0.5);
+        padding-left: 25px; position: relative;
+    }
+    .edu-item::before {
+        content: ''; position: absolute; left: -6px; top: 2px;
+        width: 10px; height: 10px; background: var(--accent); border-radius: 50%;
+        box-shadow: 0 0 12px var(--accent);
+    }
+    .edu-item .year { font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-bottom: 0.4rem; font-family: 'Syne', sans-serif; }
+    .edu-item h4 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 0.2rem; }
+    .edu-item p { color: var(--text-dim); font-size: 0.9rem; }
+
+    /* ============================================================
+       TECH STACK CARDS
+    ============================================================ */
+    .tech-grid-advanced { display: grid; grid-template-columns: repeat(2,1fr); gap: 0.9rem; margin-top: 1.5rem; }
+
+    .tech-card-adv {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 16px; border-radius: 16px;
+        position: relative; overflow: hidden;
+        transition: transform 0.4s cubic-bezier(0.19,1,0.22,1);
+        background: rgba(255,255,255,0.03);
+        isolation: isolate;
+    }
+
+    .tech-card-adv::before {
+        content: '';
+        position: absolute; inset: 0;
+        border-radius: 16px;
+        padding: 1px;
+        background: conic-gradient(
+            from var(--angle, 0deg),
+            transparent 0%, transparent 40%,
+            var(--tc, #fff) 50%,
+            transparent 60%, transparent 100%
+        );
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude;
+        animation: borderRotate 4s linear infinite;
+        opacity: 0;
+        transition: opacity 0.4s;
+        z-index: 0;
+    }
+    @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+    @keyframes borderRotate { to { --angle: 360deg; } }
+
+    .tech-card-adv:hover { transform: translateY(-6px) scale(1.04); }
+    .tech-card-adv:hover::before { opacity: 1; }
+
+    .tech-card-adv::after {
+        content: '';
+        position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+        background: linear-gradient(105deg, transparent, rgba(255,255,255,0.12), transparent);
+        transition: left 0.5s cubic-bezier(0.19,1,0.22,1);
+        z-index: 1;
+    }
+    .tech-card-adv:hover::after { left: 160%; }
+
+    .tech-card-adv > * { position: relative; z-index: 2; }
+    .tech-card-adv i { font-size: 1.4rem; }
+    .tech-card-adv h4 { font-size: 0.88rem; margin-bottom: 2px; font-family: 'Syne', sans-serif; }
+    .tech-card-adv p { font-size: 0.68rem; color: var(--text-dim); }
+
+    .tech-card-adv.python { --tc: #4fc3f7; color: #4fc3f7; }
+    .tech-card-adv.cad    { --tc: #ff9800; color: #ff9800; }
+    .tech-card-adv.manu   { --tc: #d4af37; color: #d4af37; }
+    .tech-card-adv.matlab { --tc: #ff4d4d; color: #ff4d4d; }
+    .tech-card-adv.solar  { --tc: #ffd54f; color: #ffd54f; }
+    .tech-card-adv.blender{ --tc: #ff6f00; color: #ff6f00; }
+    .tech-card-adv.simulink { --tc: #7c4dff; color: #7c4dff; }
+
+    /* ============================================================
+       PROJECT ITEMS
+    ============================================================ */
+    .proj-item {
+        margin-bottom: 1.2rem; padding: 1.6rem;
+        background: rgba(255,255,255,0.02); border-radius: 18px;
+        border: 1px solid transparent; transition: 0.4s;
+        position: relative; overflow: hidden;
+    }
+    .proj-item::before {
+        content: '';
+        position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+        background: linear-gradient(180deg, var(--accent), var(--accent2));
+        transform: scaleY(0); transform-origin: bottom;
+        transition: transform 0.4s cubic-bezier(0.19,1,0.22,1);
+        border-radius: 0 0 0 3px;
+    }
+    .proj-item:hover::before { transform: scaleY(1); }
+    .proj-item:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); transform: translateX(8px); }
+    .proj-item h4 { color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 0.4rem; }
+    .proj-item p { font-size: 0.88rem; color: var(--text-dim); }
+
+    /* ============================================================
+       FLOWCHART / HOBBIES — ENHANCED
+    ============================================================ */
+    #hobbies { padding: 130px 0; position: relative; overflow: hidden; }
+    #hobbies::before {
+        content: '';
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 900px; height: 900px;
+        background: radial-gradient(circle, rgba(255,61,61,0.04) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .hobbies-header { text-align: center; margin-bottom: 4rem; }
+    .hobbies-header p { color: var(--text-dim); font-size: 1rem; letter-spacing: 1px; }
+
+    .flowchart-container {
+        position: relative; width: 100%; overflow-x: auto; overflow-y: visible;
+        padding: 2rem 0 4rem 0;
+        scrollbar-width: thin; scrollbar-color: var(--accent) transparent;
+    }
+    .flowchart-container::-webkit-scrollbar { height: 4px; }
+    .flowchart-container::-webkit-scrollbar-track { background: transparent; }
+    .flowchart-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+    .flowchart-scroll {
+        display: flex; align-items: flex-start; gap: 0;
+        min-width: max-content; padding: 0 2rem; position: relative;
+    }
+
+    .fc-root { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 10; flex-shrink: 0; }
+    .fc-root-node {
+        background: linear-gradient(135deg, var(--accent), #ff8a3d);
+        border-radius: 24px; padding: 1.8rem 2.5rem; text-align: center;
+        font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem;
+        color: white; cursor: default; position: relative; min-width: 180px;
+        box-shadow: 0 0 50px rgba(255,61,61,0.5), 0 0 100px rgba(255,61,61,0.2);
+        animation: rootPulse 3s ease-in-out infinite;
+    }
+    .fc-root-node .root-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; animation: spinIcon 8s linear infinite; }
+    @keyframes rootPulse {
+        0%,100% { box-shadow: 0 0 50px rgba(255,61,61,0.5), 0 0 100px rgba(255,61,61,0.2); }
+        50% { box-shadow: 0 0 70px rgba(255,61,61,0.8), 0 0 140px rgba(255,61,61,0.35); }
+    }
+    @keyframes spinIcon { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .pulse-ring {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%,-50%);
+        width: 100%; height: 100%; border-radius: 24px;
+        border: 2px solid rgba(255,61,61,0.4);
+        animation: pulseRing 2s ease-out infinite; pointer-events: none;
+    }
+    @keyframes pulseRing {
+        0% { transform: translate(-50%,-50%) scale(1); opacity: 0.7; }
+        100% { transform: translate(-50%,-50%) scale(1.3); opacity: 0; }
+    }
+
+    .fc-connector-h { display: flex; align-items: center; height: 4px; position: relative; flex-shrink: 0; align-self: center; }
+    .fc-connector-h .line { height: 3px; background: linear-gradient(90deg, var(--accent), rgba(255,61,61,0.3)); position: relative; overflow: hidden; }
+    .fc-connector-h .line::after { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); animation: shimmer 2s infinite; }
+    @keyframes shimmer { from { left: -100%; } to { left: 200%; } }
+    .fc-arrow { width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 10px solid var(--accent); flex-shrink: 0; }
+
+    .fc-branch-col { display: flex; flex-direction: column; gap: 0; flex-shrink: 0; position: relative; }
+    .fc-spine { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, transparent, rgba(255,61,61,0.6), transparent); }
+    .fc-branch-row { display: flex; align-items: center; position: relative; }
+    .fc-branch-row:not(:last-child) { margin-bottom: 1.5rem; }
+    .fc-branch-stub { width: 40px; height: 3px; background: linear-gradient(90deg, rgba(255,61,61,0.6), var(--accent)); flex-shrink: 0; position: relative; }
+    .fc-spine-dot { position: absolute; left: -4px; width: 11px; height: 11px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); z-index: 2; }
+
+    /* ── ENHANCED FC BUTTON ── */
+    .fc-cat-btn {
+        border: none; border-radius: 18px; padding: 1rem 1.6rem;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.88rem;
+        cursor: pointer; display: flex; align-items: center; gap: 0.7rem;
+        transition: all 0.45s cubic-bezier(0.19,1,0.22,1);
+        position: relative; overflow: hidden; min-width: 200px; white-space: nowrap;
+        letter-spacing: 0.5px; flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .fc-cat-btn::before {
+        content: '';
+        position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+        transition: left 0.55s cubic-bezier(0.19,1,0.22,1);
+        pointer-events: none;
+    }
+    .fc-cat-btn:hover::before { left: 100%; }
+
+    .fc-cat-btn::after {
+        content: '';
+        position: absolute; inset: -2px;
+        border-radius: 20px;
+        opacity: 0;
+        transition: opacity 0.4s;
+        pointer-events: none;
+        z-index: -1;
+    }
+    .fc-cat-btn.active::after { opacity: 1; }
+
+    .fc-cat-btn .cat-icon {
+        font-size: 1.3rem; flex-shrink: 0;
+        transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        display: inline-block;
+    }
+    .fc-cat-btn:hover .cat-icon { transform: scale(1.25) rotate(-8deg); }
+    .fc-cat-btn.active .cat-icon { transform: scale(1.2) rotate(12deg); }
+
+    .fc-cat-btn .cat-arrow {
+        margin-left: auto; transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        font-size: 0.75rem; opacity: 0.7;
+    }
+    .fc-cat-btn.active .cat-arrow { transform: rotate(90deg); opacity: 1; }
+    .fc-cat-btn:hover .cat-arrow { opacity: 1; }
+
+    .fc-cat-btn.bounce {
+        animation: btnBounce 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes btnBounce {
+        0%   { transform: scale(1); }
+        30%  { transform: translateX(5px) scale(1.06); }
+        60%  { transform: translateX(10px) scale(0.98); }
+        100% { transform: translateX(8px) scale(1); }
+    }
+
+    .fc-cat-btn:hover { transform: translateX(5px) scale(1.02); }
+    .fc-cat-btn.active { transform: translateX(10px) scale(1.03); }
+
+    .fc-cat-btn.spotify {
+        background: linear-gradient(135deg,#0d3320,#1a5c38);
+        color:#1db954; border:1px solid rgba(29,185,84,0.3);
+        box-shadow:0 4px 20px rgba(29,185,84,0.15);
+    }
+    .fc-cat-btn.spotify::after { box-shadow: 0 0 0 3px rgba(29,185,84,0.35), 0 0 20px rgba(29,185,84,0.2); }
+    .fc-cat-btn.spotify:hover, .fc-cat-btn.spotify.active {
+        background:linear-gradient(135deg,#1a5c38,#1db954); color:white;
+        box-shadow:0 8px 30px rgba(29,185,84,0.45); border-color:#1db954;
+    }
+
+    .fc-cat-btn.anime {
+        background:linear-gradient(135deg,#1a0d33,#3d1a7a);
+        color:#b983ff; border:1px solid rgba(185,131,255,0.3);
+        box-shadow:0 4px 20px rgba(185,131,255,0.15);
+    }
+    .fc-cat-btn.anime::after { box-shadow: 0 0 0 3px rgba(185,131,255,0.35), 0 0 20px rgba(185,131,255,0.2); }
+    .fc-cat-btn.anime:hover, .fc-cat-btn.anime.active {
+        background:linear-gradient(135deg,#3d1a7a,#b983ff); color:white;
+        box-shadow:0 8px 30px rgba(185,131,255,0.45); border-color:#b983ff;
+    }
+
+    .fc-cat-btn.movies {
+        background:linear-gradient(135deg,#0d1f33,#1a4070);
+        color:#4fc3f7; border:1px solid rgba(79,195,247,0.3);
+        box-shadow:0 4px 20px rgba(79,195,247,0.15);
+    }
+    .fc-cat-btn.movies::after { box-shadow: 0 0 0 3px rgba(79,195,247,0.35), 0 0 20px rgba(79,195,247,0.2); }
+    .fc-cat-btn.movies:hover, .fc-cat-btn.movies.active {
+        background:linear-gradient(135deg,#1a4070,#4fc3f7); color:white;
+        box-shadow:0 8px 30px rgba(79,195,247,0.45); border-color:#4fc3f7;
+    }
+
+    .fc-cat-btn.gaming {
+        background:linear-gradient(135deg,#1a0d0d,#4a1010);
+        color:#ff5252; border:1px solid rgba(255,82,82,0.3);
+        box-shadow:0 4px 20px rgba(255,82,82,0.15);
+    }
+    .fc-cat-btn.gaming::after { box-shadow: 0 0 0 3px rgba(255,82,82,0.35), 0 0 20px rgba(255,82,82,0.2); }
+    .fc-cat-btn.gaming:hover, .fc-cat-btn.gaming.active {
+        background:linear-gradient(135deg,#4a1010,#ff5252); color:white;
+        box-shadow:0 8px 30px rgba(255,82,82,0.45); border-color:#ff5252;
+    }
+
+    .fc-cat-btn.sports {
+        background:linear-gradient(135deg,#0d2010,#1a4020);
+        color:#69f0ae; border:1px solid rgba(105,240,174,0.3);
+        box-shadow:0 4px 20px rgba(105,240,174,0.15);
+    }
+    .fc-cat-btn.sports::after { box-shadow: 0 0 0 3px rgba(105,240,174,0.35), 0 0 20px rgba(105,240,174,0.2); }
+    .fc-cat-btn.sports:hover, .fc-cat-btn.sports.active {
+        background:linear-gradient(135deg,#1a4020,#69f0ae); color:#0a1a0d;
+        box-shadow:0 8px 30px rgba(105,240,174,0.45); border-color:#69f0ae;
+    }
+
+    .fc-cat-btn.novels {
+        background:linear-gradient(135deg,#1a1200,#4a3500);
+        color:#ffca28; border:1px solid rgba(255,202,40,0.3);
+        box-shadow:0 4px 20px rgba(255,202,40,0.15);
+    }
+    .fc-cat-btn.novels::after { box-shadow: 0 0 0 3px rgba(255,202,40,0.35), 0 0 20px rgba(255,202,40,0.2); }
+    .fc-cat-btn.novels:hover, .fc-cat-btn.novels.active {
+        background:linear-gradient(135deg,#4a3500,#ffca28); color:#1a1200;
+        box-shadow:0 8px 30px rgba(255,202,40,0.45); border-color:#ffca28;
+    }
+
+    .fc-cat-connector { display: flex; align-items: center; flex-shrink: 0; }
+    .fc-cat-connector .cline {
+        height: 2px; width: 30px;
+        background: linear-gradient(90deg, var(--color, var(--accent)), rgba(255,255,255,0.2));
+        overflow: hidden; position: relative;
+    }
+    .fc-cat-connector .cline::after {
+        content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+        animation: shimmer 1.2s infinite;
+    }
+    .fc-panel-wrapper.show .fc-cat-connector .cline::after {
+        animation: shimmer 0.6s infinite;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,1), transparent);
+    }
+    .fc-cat-connector .carrow { width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid var(--color, var(--accent)); }
+
+    .fc-items-panel {
+        display: none; flex-direction: column; gap: 0.6rem;
+        background: rgba(8,8,14,0.97); border-radius: 20px;
+        padding: 1.2rem; border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(30px); min-width: 260px; max-width: 300px; flex-shrink: 0;
+        box-shadow: 0 25px 70px rgba(0,0,0,0.6);
+        filter: blur(4px);
+        transition: filter 0.4s ease;
+    }
+    .fc-items-panel.show {
+        display: flex;
+        animation: panelIn 0.5s cubic-bezier(0.19,1,0.22,1) forwards;
+    }
+    @keyframes panelIn {
+        from { opacity:0; transform:translateX(-24px) scale(0.93); filter:blur(8px); }
+        to   { opacity:1; transform:translateX(0) scale(1);        filter:blur(0px); }
+    }
+
+    .panel-header {
+        font-family: 'Syne', sans-serif; font-size: 0.62rem; text-transform: uppercase;
+        letter-spacing: 2px; color: var(--text-dim); margin-bottom: 0.4rem;
+        padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .fc-item {
+        display: flex; align-items: center; gap: 0.8rem;
+        padding: 0.8rem 1rem; border-radius: 14px;
+        border: 1px solid transparent; transition: all 0.3s cubic-bezier(0.19,1,0.22,1);
+        cursor: default; position: relative; overflow: hidden;
+        opacity: 0; transform: translateX(-12px);
+        will-change: transform, opacity;
+    }
+    .fc-item::before {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+        border-radius: 3px; background: var(--item-color, var(--accent));
+        transform: scaleY(0); transition: transform 0.3s cubic-bezier(0.19,1,0.22,1);
+    }
+    .fc-item:hover::before { transform: scaleY(1); }
+    .fc-item:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.09);
+        transform: translateX(6px);
+        box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+    }
+
+    .fc-items-panel.show .fc-item { animation: itemFadeIn 0.45s cubic-bezier(0.19,1,0.22,1) forwards; }
+    .fc-items-panel.show .fc-item:nth-child(2)  { animation-delay: 0.04s }
+    .fc-items-panel.show .fc-item:nth-child(3)  { animation-delay: 0.09s }
+    .fc-items-panel.show .fc-item:nth-child(4)  { animation-delay: 0.14s }
+    .fc-items-panel.show .fc-item:nth-child(5)  { animation-delay: 0.19s }
+    .fc-items-panel.show .fc-item:nth-child(6)  { animation-delay: 0.24s }
+    .fc-items-panel.show .fc-item:nth-child(7)  { animation-delay: 0.29s }
+    .fc-items-panel.show .fc-item:nth-child(8)  { animation-delay: 0.34s }
+    .fc-items-panel.show .fc-item:nth-child(9)  { animation-delay: 0.39s }
+    .fc-items-panel.show .fc-item:nth-child(10) { animation-delay: 0.44s }
+    @keyframes itemFadeIn {
+        from { opacity:0; transform:translateX(-12px) scale(0.97); }
+        to   { opacity:1; transform:translateX(0)     scale(1); }
+    }
+
+    .fc-item-rank {
+        font-family: 'Syne', sans-serif; font-size: 0.62rem; font-weight: 800;
+        color: var(--item-color, var(--accent));
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px; padding: 3px 8px; flex-shrink: 0; min-width: 28px; text-align: center;
+    }
+    .fc-item-info { flex: 1; min-width: 0; }
+    .fc-item-name {
+        font-weight: 600; font-size: 0.83rem; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis; color: var(--text);
+        font-family: 'Syne', sans-serif;
+    }
+    .fc-item-sub { font-size: 0.67rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fc-item-emoji { font-size: 1.2rem; flex-shrink: 0; }
+
+    .fc-item.spotify-item  { --item-color: #1db954; }
+    .fc-item.spotify-item .fc-item-rank  { color:#1db954; border-color:rgba(29,185,84,0.3);  background:rgba(29,185,84,0.08);  }
+
+    .fc-item.anime-item    { --item-color: #b983ff; }
+    .fc-item.anime-item .fc-item-rank    { color:#b983ff; border-color:rgba(185,131,255,0.3); background:rgba(185,131,255,0.08);}
+
+    .fc-item.movies-item   { --item-color: #4fc3f7; }
+    .fc-item.movies-item .fc-item-rank   { color:#4fc3f7; border-color:rgba(79,195,247,0.3);  background:rgba(79,195,247,0.08); }
+
+    .fc-item.gaming-item   { --item-color: #ff5252; }
+    .fc-item.gaming-item .fc-item-rank   { color:#ff5252; border-color:rgba(255,82,82,0.3);   background:rgba(255,82,82,0.08);  }
+
+    .fc-item.sports-item   { --item-color: #69f0ae; }
+    .fc-item.sports-item .fc-item-rank   { color:#69f0ae; border-color:rgba(105,240,174,0.3); background:rgba(105,240,174,0.08);}
+
+    .fc-item.novels-item   { --item-color: #ffca28; }
+    .fc-item.novels-item .fc-item-rank   { color:#ffca28; border-color:rgba(255,202,40,0.3);  background:rgba(255,202,40,0.08); }
+
+    .spotify-bars { display: flex; align-items: flex-end; gap: 2px; height: 16px; flex-shrink: 0; }
+    .spotify-bars span { width: 3px; background: #1db954; border-radius: 2px; animation: bars 1s ease-in-out infinite alternate; }
+    .spotify-bars span:nth-child(1){animation-delay:0s;height:6px}
+    .spotify-bars span:nth-child(2){animation-delay:0.2s;height:12px}
+    .spotify-bars span:nth-child(3){animation-delay:0.1s;height:8px}
+    .spotify-bars span:nth-child(4){animation-delay:0.3s;height:14px}
+    @keyframes bars { from{transform:scaleY(0.4)} to{transform:scaleY(1)} }
+
+    .film-spin { display: inline-block; animation: filmSpin 3s linear infinite; }
+    @keyframes filmSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    .fc-panel-wrapper { display: none; align-items: center; }
+    .fc-panel-wrapper.show { display: flex; }
+
+    .scroll-hint {
+        display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        color: var(--text-dim); font-size: 0.72rem; letter-spacing: 1.5px;
+        text-transform: uppercase; margin-top: 2rem;
+        animation: hintBounce 2s ease-in-out infinite;
+    }
+    @keyframes hintBounce { 0%,100%{transform:translateX(0);opacity:0.5} 50%{transform:translateX(8px);opacity:1} }
+
+    /* ============================================================
+       CONTACT
+    ============================================================ */
+    #contact .glass-panel { text-align: center; }
+    .social-icons a {
+        color: var(--text-mid) !important;
+        transition: color 0.3s, transform 0.3s !important;
+        display: inline-block;
+    }
+    .social-icons a:hover { color: var(--accent) !important; transform: translateY(-4px) scale(1.15) !important; }
+
+    /* ============================================================
+       REVEAL ANIMATIONS
+    ============================================================ */
+    .reveal {
+        opacity: 0; transform: translateY(60px);
+        transition: opacity 1s cubic-bezier(0.19,1,0.22,1), transform 1s cubic-bezier(0.19,1,0.22,1);
+    }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+    .reveal-left { opacity: 0; transform: translateX(-60px); transition: opacity 1s cubic-bezier(0.19,1,0.22,1), transform 1s cubic-bezier(0.19,1,0.22,1); }
+    .reveal-left.active { opacity: 1; transform: translateX(0); }
+    .reveal-right { opacity: 0; transform: translateX(60px); transition: opacity 1s cubic-bezier(0.19,1,0.22,1), transform 1s cubic-bezier(0.19,1,0.22,1); }
+    .reveal-right.active { opacity: 1; transform: translateX(0); }
+
+    /* ============================================================
+       TILT CARDS
+    ============================================================ */
+    .tilt-card { transform-style: preserve-3d; will-change: transform; }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer { text-align: center; padding: 5rem; color: #333; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.05); background: #04040608; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 1000px) {
+        .hero-layout, .grid-2 { grid-template-columns: 1fr; text-align: center; }
+        .hero-name { font-size: 3.5rem; }
+        .cool-frame { width: 280px; height: 280px; margin: 0 auto; }
+        .hero-quick-stats { justify-content: center; }
+        .hero-desc { margin: 0 auto 2.5rem auto; }
+        .hero-cta { justify-content: center; }
+        .hero-badge { justify-content: center; }
+        .img-aura, .rotating-ring { display: none; }
+    }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+
+    <!-- Three.js BG Canvas -->
+    <canvas id="three-bg"></canvas>
+
+    <!-- ===================== NAVBAR ===================== -->
+    <nav class="navbar">
+        <div class="nav-inner">
+            <a href="#home" class="logo">Creative Mind<span>.</span></a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">Mission</a></li>
+                <li><a href="#education">Milestones</a></li>
+                <li><a href="#projects">Work</a></li>
+                <li><a href="gallery.html" class="nav-cta nav-gallery">
+                    Gallery <i class="fas fa-images" style="font-size:0.7rem;margin-left:5px;"></i>
+                </a></li>
+                <li><a href="resume.pdf" target="_blank" class="nav-cta">
+                    Resume <i class="fas fa-download" style="font-size:0.7rem;margin-left:5px;"></i>
+                </a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+
+    <!-- ===================== HERO ===================== -->
+    <section id="home" class="hero-section">
+        <div class="hero-blob blob-1"></div>
+        <div class="hero-blob blob-2"></div>
+        <div class="wrapper">
+            <div class="hero-layout">
+                <div class="hero-text reveal">
+                    <div class="hero-badge">Electronics &amp; Telecommunication Engineering Student</div>
+                    <h1 class="hero-name">Krupa <span class="highlight">Parihar</span></h1>
+                    <p class="hero-role">PCCOE Pune · B.Tech ENTC</p>
+                    <p class="hero-desc">Passionate learner blending technology with creativity.</p>
+                    <div class="hero-quick-stats">
+                        <div class="q-stat"><span class="val">97.87</span><span class="lbl">MHT-CET Percentile</span></div>
+                        <div class="q-stat"><span class="val">91</span><span class="lbl">JEE Mains Percentile</span></div>
+                    </div>
+                    <div class="hero-cta">
+                        <div class="btn-magnetic"><a href="#projects" class="btn-main">Explore Work</a></div>
+                        <div class="btn-magnetic"><a href="resume.pdf" target="_blank" class="btn-outline">Download CV</a></div>
+                    </div>
+                </div>
+                <div class="hero-visual reveal-right">
+                    <div class="img-aura"></div>
+                    <div class="rotating-ring"></div>
+                    <div class="rotating-ring rotating-ring-2"></div>
+                    <div class="cool-frame">
+                        <img src="krupa.jpg" alt="Krupa Parihar" class="profile-img">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== ABOUT ME ===================== -->
+    <section id="about-me" class="section-padding">
+        <div class="wrapper">
+            <div class="glass-card glass-panel tilt-card reveal">
+                <div class="grid-2">
+                    <div class="reveal-left">
+                        <h2 class="sec-title">About <span>Me</span></h2>
+                        <p style="margin-bottom:1.5rem;font-size:1.05rem;">
+                            I am Krupa Parihar from Achalpur, District Amravati, currently pursuing my B.Tech in Electronics and
+                            Telecommunication Engineering at PCCOE, Pune. Coming from a small town and stepping into a competitive
+                            academic environment has shaped me into someone who is adaptable, curious, and determined to grow continuously.
+                        </p>
+                        <p style="line-height:1.9;">
+                            I have a strong interest in technology, especially in areas where software and electronics come together.
+                            Alongside my technical journey, I also have a creative side — I enjoy cooking, designing, sketching, and
+                            expressing ideas through fashion and art. These hobbies help me stay balanced and bring creativity into my
+                            problem-solving approach.
+                        </p>
+                        <p style="margin-top:1rem;line-height:1.9;">
+                            I believe in learning by doing, and I actively work on projects involving simulations, embedded systems,
+                            and programming. My goal is to build <strong>meaningful solutions</strong> and continuously grow.
+                        </p>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;" class="reveal-right">
+                        <div class="frame-wrapper">
+                            <div class="frame-glow"></div>
+                            <div class="round-frame">
+                                <img src="trip.jpg" alt="Krupa Parihar">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PERSONALITY ===================== -->
+    <section id="personality" class="section-padding">
+        <div class="wrapper">
+            <div class="glass-card glass-panel tilt-card reveal">
+                <h2 class="sec-title">Personality <span>Profile</span></h2>
+                <div class="grid-2">
+                    <div class="reveal-left">
+                        <h3 style="margin-bottom:1rem;font-family:'Syne',sans-serif;font-size:1.4rem;color:var(--accent);">
+                            Advocate (INFJ-T)
+                        </h3>
+                        <p style="color:var(--text-mid);line-height:1.9;margin-bottom:1rem;">
+                            I am a thoughtful and purpose-driven individual who values meaningful work and deep understanding.
+                            As an Advocate (INFJ-T), I tend to think beyond surface-level solutions and focus on ideas that create real impact.
+                        </p>
+                        <p style="color:var(--text-mid);line-height:1.9;margin-bottom:1rem;">
+                            I naturally prefer calm and focused environments where I can explore concepts deeply and work independently.
+                            My intuitive thinking helps me connect ideas, understand patterns, and approach problems creatively, while
+                            still maintaining a structured and responsible mindset.
+                        </p>
+                        <p style="color:var(--text-mid);line-height:1.9;margin-bottom:1rem;">
+                            I value creativity, empathy, and personal growth. Rather than rushing into things, I take time to understand
+                            situations and build solutions that are not only effective but also meaningful.
+                        </p>
+                        <p style="color:var(--text-mid);line-height:1.9;">
+                            I believe in continuous self-improvement and learning through experience. Whether it's technology or creativity,
+                            I always try to give my best and grow with every step.
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:1.5rem;justify-content:center;align-items:center;flex-wrap:wrap;" class="reveal-right">
+                        <div class="rect-frame"><img src="profile1.jpg" alt="Personality Image 1" class="rect-img"></div>
+                        <div class="rect-frame"><img src="profile.jpg" alt="Personality Image 2" class="rect-img"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== QUOTE ===================== -->
+    <div class="quote-box reveal">
+        <p class="quote-text">The important thing is not to stop questioning. Curiosity has its own reason for existing.</p>
+        <span class="quote-author">— Albert Einstein</span>
+    </div>
+
+    <!-- ===================== PHILOSOPHY ===================== -->
+    <section id="about" class="section-padding">
+        <div class="wrapper">
+            <div class="glass-card glass-panel tilt-card reveal">
+                <div class="grid-2">
+                    <div class="reveal-left">
+                        <h2 class="sec-title">The <span>Philosophy</span></h2>
+                        <p style="margin-bottom:1.5rem;color:var(--text-mid);font-size:1.05rem;">Technology is the bridge between imagination and reality. I blend electronics, programming, and creativity to build solutions that actually matter.</p>
+                        <p style="color:var(--text-mid);line-height:1.8;">Driven by an Advocate's mindset, my focus remains on combining <strong style="color:var(--text);">embedded systems</strong> with thoughtful design — creating tools that are both functional and human-centred.</p>
+                    </div>
+                    <div class="reveal-right" style="display:flex;align-items:center;">
+                        <div>
+                            <h3 style="margin-bottom:1rem;font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;">Core Interests</h3>
+                            <p style="color:var(--text-mid);line-height:1.9;font-size:0.95rem;">
+                                From K-dramas and Bollywood to cooking, badminton, and manhwa — my world stretches far beyond engineering.
+                                Explore the full universe below in the interactive taste map.
+                            </p>
+                            <p style="color:var(--text-dim);margin-top:1rem;font-size:0.85rem;letter-spacing:1px;">
+                                <i class="fas fa-arrow-down" style="color:var(--accent);margin-right:8px;"></i>
+                                See My Taste Universe ↓
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== HOBBIES FLOWCHART ===================== -->
+    <section id="hobbies">
+        <div class="wrapper">
+            <div class="hobbies-header reveal">
+                <h2 class="sec-title">My <span>Taste</span> Universe</h2>
+                <p>Click a category → explore what I'm really into</p>
+            </div>
+        </div>
+        <div class="flowchart-container reveal">
+            <div class="flowchart-scroll" id="flowchartScroll">
+
+                <!-- ROOT NODE -->
+                <div class="fc-root">
+                    <div class="fc-root-node">
+                        <div class="pulse-ring"></div>
+                        <span class="root-icon">🎯</span>
+                        Krupa's<br>Favourites
+                    </div>
+                </div>
+
+                <!-- ROOT → BRANCH CONNECTOR -->
+                <div class="fc-connector-h" style="align-self:center;">
+                    <div class="line" style="width:50px;"></div>
+                    <div class="fc-arrow"></div>
+                </div>
+
+                <!-- ALL BRANCHES -->
+                <div class="fc-branch-col">
+                    <div class="fc-spine"></div>
+
+                    <!-- ── SPOTIFY ── -->
+                    <div class="fc-branch-row" id="branchSpotify">
+                        <div class="fc-spine-dot" style="top:22px;"></div>
+                        <div class="fc-branch-stub"></div>
+                        <button class="fc-cat-btn spotify" onclick="toggleBranch('spotify')">
+                            <span class="cat-icon">🎵</span>Spotify Favourites<i class="fas fa-chevron-right cat-arrow"></i>
+                        </button>
+                        <div class="fc-panel-wrapper" id="panelWrapperSpotify">
+                            <div class="fc-cat-connector"><div class="cline" style="--color:#1db954;"></div><div class="carrow" style="--color:#1db954;"></div></div>
+                            <div class="fc-items-panel" id="panelSpotify">
+                                <div class="panel-header">🎧 Top Tracks on Repeat</div>
+                                <div class="fc-item spotify-item"><div class="fc-item-rank">#1</div><div class="fc-item-info"><div class="fc-item-name">O Rangrez</div><div class="fc-item-sub">Bollywood · Soulful</div></div><div class="spotify-bars"><span></span><span></span><span></span><span></span></div></div>
+                                <div class="fc-item spotify-item"><div class="fc-item-rank">#2</div><div class="fc-item-info"><div class="fc-item-name">Finding Her</div><div class="fc-item-sub">Indie · Emotional</div></div><div class="spotify-bars"><span></span><span></span><span></span><span></span></div></div>
+                                <div class="fc-item spotify-item"><div class="fc-item-rank">#3</div><div class="fc-item-info"><div class="fc-item-name">Jogi</div><div class="fc-item-sub">Sufi · Folk</div></div><div class="spotify-bars"><span></span><span></span><span></span><span></span></div></div>
+                                <div class="fc-item spotify-item"><div class="fc-item-rank">#4</div><div class="fc-item-info"><div class="fc-item-name">Saathiyaa</div><div class="fc-item-sub">Bollywood · Romantic</div></div><div class="spotify-bars"><span></span><span></span><span></span><span></span></div></div>
+                                <div class="fc-item spotify-item"><div class="fc-item-rank">#5</div><div class="fc-item-info"><div class="fc-item-name">Tere Bina</div><div class="fc-item-sub">Bollywood · Classic</div></div><div class="spotify-bars"><span></span><span></span><span></span><span></span></div></div>
+                                <div class="fc-item spotify-item"><div class="fc-item-rank">#6</div><div class="fc-item-info"><div class="fc-item-name">Saibo</div><div class="fc-item-sub">Bollywood · Soulful</div></div><div class="spotify-bars"><span></span><span></span><span></span><span></span></div></div>
+                                <div class="fc-item spotify-item"><div class="fc-item-rank">#7</div><div class="fc-item-info"><div class="fc-item-name">Tere Sang Yaara</div><div class="fc-item-sub">Bollywood · Romantic</div></div><div class="spotify-bars"><span></span><span></span><span></span><span></span></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── DRAMA (was Anime) ── -->
+                    <div class="fc-branch-row" id="branchAnime">
+                        <div class="fc-spine-dot" style="top:22px;"></div>
+                        <div class="fc-branch-stub"></div>
+                        <button class="fc-cat-btn anime" onclick="toggleBranch('anime')">
+                            <span class="cat-icon">🎭</span>Favourite Dramas<i class="fas fa-chevron-right cat-arrow"></i>
+                        </button>
+                        <div class="fc-panel-wrapper" id="panelWrapperAnime">
+                            <div class="fc-cat-connector"><div class="cline" style="--color:#b983ff;"></div><div class="carrow" style="--color:#b983ff;"></div></div>
+                            <div class="fc-items-panel" id="panelAnime">
+                                <div class="panel-header">🌸 All-Time Watch List</div>
+                                <div class="fc-item anime-item"><div class="fc-item-rank">#1</div><div class="fc-item-info"><div class="fc-item-name">Business Proposal</div><div class="fc-item-sub">K-Drama · Romantic Comedy</div></div><div class="fc-item-emoji">💼</div></div>
+                                <div class="fc-item anime-item"><div class="fc-item-rank">#2</div><div class="fc-item-info"><div class="fc-item-name">Boys Over Flowers</div><div class="fc-item-sub">K-Drama · Romance</div></div><div class="fc-item-emoji">🌸</div></div>
+                                <div class="fc-item anime-item"><div class="fc-item-rank">#3</div><div class="fc-item-info"><div class="fc-item-name">Goblin</div><div class="fc-item-sub">K-Drama · Fantasy</div></div><div class="fc-item-emoji">🕯️</div></div>
+                                <div class="fc-item anime-item"><div class="fc-item-rank">#4</div><div class="fc-item-info"><div class="fc-item-name">The First Frost</div><div class="fc-item-sub">C-Drama · Romance</div></div><div class="fc-item-emoji">❄️</div></div>
+                                <div class="fc-item anime-item"><div class="fc-item-rank">#5</div><div class="fc-item-info"><div class="fc-item-name">Hidden Love</div><div class="fc-item-sub">C-Drama · Romance</div></div><div class="fc-item-emoji">💌</div></div>
+                                <div class="fc-item anime-item"><div class="fc-item-rank">#6</div><div class="fc-item-info"><div class="fc-item-name">Vincenzo</div><div class="fc-item-sub">K-Drama · Thriller</div></div><div class="fc-item-emoji">🦅</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── MOVIES ── -->
+                    <div class="fc-branch-row" id="branchMovies">
+                        <div class="fc-spine-dot" style="top:22px;"></div>
+                        <div class="fc-branch-stub"></div>
+                        <button class="fc-cat-btn movies" onclick="toggleBranch('movies')">
+                            <span class="cat-icon">🎬</span>Favourite Movies<i class="fas fa-chevron-right cat-arrow"></i>
+                        </button>
+                        <div class="fc-panel-wrapper" id="panelWrapperMovies">
+                            <div class="fc-cat-connector"><div class="cline" style="--color:#4fc3f7;"></div><div class="carrow" style="--color:#4fc3f7;"></div></div>
+                            <div class="fc-items-panel" id="panelMovies">
+                                <div class="panel-header"><span class="film-spin">🎞️</span> All-Time Greatest Hits</div>
+                                <div class="fc-item movies-item"><div class="fc-item-rank">#1</div><div class="fc-item-info"><div class="fc-item-name">Jab We Met</div><div class="fc-item-sub">Romance · Drama · Bollywood</div></div><div class="fc-item-emoji">🚂</div></div>
+                                <div class="fc-item movies-item"><div class="fc-item-rank">#2</div><div class="fc-item-info"><div class="fc-item-name">3 Idiots</div><div class="fc-item-sub">Comedy · Drama · 2009</div></div><div class="fc-item-emoji">🎓</div></div>
+                                <div class="fc-item movies-item"><div class="fc-item-rank">#3</div><div class="fc-item-info"><div class="fc-item-name">Taare Zameen Par</div><div class="fc-item-sub">Drama · Inspirational · 2007</div></div><div class="fc-item-emoji">⭐</div></div>
+                                <div class="fc-item movies-item"><div class="fc-item-rank">#4</div><div class="fc-item-info"><div class="fc-item-name">Dangal</div><div class="fc-item-sub">Sports · Drama · 2016</div></div><div class="fc-item-emoji">🏅</div></div>
+                                <div class="fc-item movies-item"><div class="fc-item-rank">#5</div><div class="fc-item-info"><div class="fc-item-name">Lucky The Racer</div><div class="fc-item-sub">Action · Telugu</div></div><div class="fc-item-emoji">🏎️</div></div>
+                                <div class="fc-item movies-item"><div class="fc-item-rank">#6</div><div class="fc-item-info"><div class="fc-item-name">Surya The Soldier</div><div class="fc-item-sub">Action · Telugu</div></div><div class="fc-item-emoji">⚡</div></div>
+                                <div class="fc-item movies-item"><div class="fc-item-rank">#7</div><div class="fc-item-info"><div class="fc-item-name">Mass</div><div class="fc-item-sub">Action · Telugu</div></div><div class="fc-item-emoji">💥</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── FOOD (was Gaming) ── -->
+                    <div class="fc-branch-row" id="branchGaming">
+                        <div class="fc-spine-dot" style="top:22px;"></div>
+                        <div class="fc-branch-stub"></div>
+                        <button class="fc-cat-btn gaming" onclick="toggleBranch('gaming')">
+                            <span class="cat-icon">🍽️</span>Favourite Foods<i class="fas fa-chevron-right cat-arrow"></i>
+                        </button>
+                        <div class="fc-panel-wrapper" id="panelWrapperGaming">
+                            <div class="fc-cat-connector"><div class="cline" style="--color:#ff5252;"></div><div class="carrow" style="--color:#ff5252;"></div></div>
+                            <div class="fc-items-panel" id="panelGaming">
+                                <div class="panel-header">🍴 All-Time Cravings</div>
+                                <div class="fc-item gaming-item"><div class="fc-item-rank">#1</div><div class="fc-item-info"><div class="fc-item-name">Chicken Biryani</div><div class="fc-item-sub">Rice · Spiced · Comfort</div></div><div class="fc-item-emoji">🍛</div></div>
+                                <div class="fc-item gaming-item"><div class="fc-item-rank">#2</div><div class="fc-item-info"><div class="fc-item-name">Momos</div><div class="fc-item-sub">Steamed · Street Food</div></div><div class="fc-item-emoji">🥟</div></div>
+                                <div class="fc-item gaming-item"><div class="fc-item-rank">#3</div><div class="fc-item-info"><div class="fc-item-name">Cake</div><div class="fc-item-sub">Baked · Sweet · Celebratory</div></div><div class="fc-item-emoji">🎂</div></div>
+                                <div class="fc-item gaming-item"><div class="fc-item-rank">#4</div><div class="fc-item-info"><div class="fc-item-name">Ice Cream</div><div class="fc-item-sub">Frozen · Dessert</div></div><div class="fc-item-emoji">🍦</div></div>
+                                <div class="fc-item gaming-item"><div class="fc-item-rank">#5</div><div class="fc-item-info"><div class="fc-item-name">Crabs</div><div class="fc-item-sub">Seafood · Coastal</div></div><div class="fc-item-emoji">🦀</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── SPORTS ── -->
+                    <div class="fc-branch-row" id="branchSports">
+                        <div class="fc-spine-dot" style="top:22px;"></div>
+                        <div class="fc-branch-stub"></div>
+                        <button class="fc-cat-btn sports" onclick="toggleBranch('sports')">
+                            <span class="cat-icon">🏸</span>Physical Sports<i class="fas fa-chevron-right cat-arrow"></i>
+                        </button>
+                        <div class="fc-panel-wrapper" id="panelWrapperSports">
+                            <div class="fc-cat-connector"><div class="cline" style="--color:#69f0ae;"></div><div class="carrow" style="--color:#69f0ae;"></div></div>
+                            <div class="fc-items-panel" id="panelSports">
+                                <div class="panel-header">⚡ Active Pursuits</div>
+                                <div class="fc-item sports-item"><div class="fc-item-rank">#1</div><div class="fc-item-info"><div class="fc-item-name">Badminton</div><div class="fc-item-sub">Racket Sport · Indoor</div></div><div class="fc-item-emoji">🏸</div></div>
+                                <div class="fc-item sports-item"><div class="fc-item-rank">#2</div><div class="fc-item-info"><div class="fc-item-name">Volleyball</div><div class="fc-item-sub">Team Sport · Outdoor</div></div><div class="fc-item-emoji">🏐</div></div>
+                                <div class="fc-item sports-item"><div class="fc-item-rank">#3</div><div class="fc-item-info"><div class="fc-item-name">Cricket</div><div class="fc-item-sub">Team Sport · Bat &amp; Ball</div></div><div class="fc-item-emoji">🏏</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── NOVELS & MANHWA ── -->
+                    <div class="fc-branch-row" id="branchNovels">
+                        <div class="fc-spine-dot" style="top:22px;"></div>
+                        <div class="fc-branch-stub"></div>
+                        <button class="fc-cat-btn novels" onclick="toggleBranch('novels')">
+                            <span class="cat-icon">📚</span>Novels &amp; Manhwa<i class="fas fa-chevron-right cat-arrow"></i>
+                        </button>
+                        <div class="fc-panel-wrapper" id="panelWrapperNovels">
+                            <div class="fc-cat-connector"><div class="cline" style="--color:#ffca28;"></div><div class="carrow" style="--color:#ffca28;"></div></div>
+                            <div class="fc-items-panel" id="panelNovels">
+                                <div class="panel-header">📖 Reading List</div>
+                                <div class="fc-item novels-item"><div class="fc-item-rank">#1</div><div class="fc-item-info"><div class="fc-item-name">Jinx</div><div class="fc-item-sub">Manhwa · Drama</div></div><div class="fc-item-emoji">🎭</div></div>
+                                <div class="fc-item novels-item"><div class="fc-item-rank">#2</div><div class="fc-item-info"><div class="fc-item-name">Tears on the Withered Flowers</div><div class="fc-item-sub">Manhwa · Romance</div></div><div class="fc-item-emoji">🌸</div></div>
+                                <div class="fc-item novels-item"><div class="fc-item-rank">#3</div><div class="fc-item-info"><div class="fc-item-name">Hunting Adeline</div><div class="fc-item-sub">Dark Romance · Thriller</div></div><div class="fc-item-emoji">🌙</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /.fc-branch-col -->
+            </div><!-- /.flowchart-scroll -->
+            <div class="scroll-hint"><i class="fas fa-arrow-right"></i> Scroll to explore &nbsp;|&nbsp; Click a category to expand</div>
+        </div><!-- /.flowchart-container -->
+    </section>
+
+    <!-- ===================== EDUCATION ===================== -->
+    <section id="education" class="section-padding">
+        <div class="wrapper">
+            <h2 class="sec-title reveal">Academic <span>Journey</span></h2>
+            <div class="grid-2">
+                <div class="glass-card glass-panel tilt-card reveal-left">
+                    <h3 style="font-family:'Syne',sans-serif;margin-bottom:1.5rem;">Background</h3>
+                    <div class="edu-item">
+                        <span class="year">2024 – Present</span>
+                        <h4>B.Tech Electronics &amp; Telecommunication Engineering</h4>
+                        <p>PCCOE Pune</p>
+                    </div>
+                    <div class="edu-item">
+                        <span class="year">Class 11 – 12</span>
+                        <h4>Rashtriya Junior College</h4>
+                        <p>Science Stream · MHT-CET Preparation via Physics Wallah</p>
+                    </div>
+                    <div class="edu-item">
+                        <span class="year">Class 7 – 10</span>
+                        <h4>City High School</h4>
+                        <p>Achalpur, District Amravati</p>
+                    </div>
+                    <div class="edu-item">
+                        <span class="year">Class 5 – 7</span>
+                        <h4>Jankibai Girls School</h4>
+                        <p>Achalpur, District Amravati</p>
+                    </div>
+                    <div class="edu-item">
+                        <span class="year">Class 1 – 4</span>
+                        <h4>Sultanpura Achalpur</h4>
+                        <p>Primary Schooling · Achalpur</p>
+                    </div>
+                </div>
+                <div class="glass-card glass-panel tilt-card reveal-right">
+                    <h3 style="font-family:'Syne',sans-serif;margin-bottom:1.5rem;">Key Honors</h3>
+                    <div>
+                        <div class="tag" style="display:block;margin-bottom:12px;"><i class="fas fa-chart-bar"></i> 97.87 Percentile in MHT-CET</div>
+                        <div class="tag" style="display:block;margin-bottom:12px;"><i class="fas fa-award"></i> 91 Percentile in JEE Mains</div>
+                        <div class="tag" style="display:block;margin-bottom:12px;"><i class="fas fa-medal"></i> FFE Scholarship (Foundation For Excellence)</div>
+                        <div class="tag" style="display:block;margin-bottom:12px;"><i class="fas fa-trophy"></i> Winner — Mehndi Competition</div>
+                        <div class="tag" style="display:block;margin-bottom:12px;"><i class="fas fa-palette"></i> Winner — Drawing Competition</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PROJECTS ===================== -->
+    <section id="projects" class="section-padding">
+        <div class="wrapper">
+            <h2 class="sec-title reveal">Featured <span>Projects</span></h2>
+            <div class="grid-2">
+                <div class="glass-card glass-panel tilt-card reveal-left">
+                    <h3 style="font-family:'Syne',sans-serif;margin-bottom:0.5rem;">Core Tech Stack</h3>
+                    <div class="tech-grid-advanced">
+                        <div class="tech-card-adv matlab"><i class="fas fa-chart-line"></i><div><h4>MATLAB</h4><p>Simulation</p></div></div>
+                        <div class="tech-card-adv python"><i class="fab fa-python"></i><div><h4>Python</h4><p>Simulations &amp; Data</p></div></div>
+                        <div class="tech-card-adv manu"><i class="fas fa-code"></i><div><h4>C Language</h4><p>Systems Programming</p></div></div>
+                        <div class="tech-card-adv solar"><i class="fas fa-globe"></i><div><h4>HTML</h4><p>Web Development</p></div></div>
+                        <div class="tech-card-adv blender"><i class="fas fa-cube"></i><div><h4>Blender</h4><p>3D Rendering</p></div></div>
+                        <div class="tech-card-adv cad"><i class="fas fa-microchip"></i><div><h4>Arduino</h4><p>Embedded Systems</p></div></div>
+                        <div class="tech-card-adv simulink"><i class="fas fa-project-diagram"></i><div><h4>Proteus</h4><p>Circuit Simulation</p></div></div>
+                    </div>
+                </div>
+                <div class="glass-card glass-panel tilt-card reveal-right">
+                    <div class="proj-item">
+                        <h4>Hotel Management System (C)</h4>
+                        <p>A terminal-based hotel management application built in C covering booking, billing, and room management.</p>
+                    </div>
+                    <div class="proj-item">
+                        <h4>Study-Based Alarm System</h4>
+                        <p>An embedded system project using Arduino to build a smart alarm designed around study schedules and productivity.</p>
+                    </div>
+                    <div class="proj-item">
+                        <h4>Modified Bag</h4>
+                        <p>An innovative hardware project combining design and electronics to create a smart, functional modified bag.</p>
+                    </div>
+                    <div class="proj-item">
+                        <h4>Virtual Lab — Chain Rule</h4>
+                        <p>An interactive virtual lab explaining Chain Rule in Partial Differentiation with visual simulations.</p>
+                    </div>
+                    <div class="proj-item">
+                        <h4>Python Simulations</h4>
+                        <p>Physics simulations of Gravity, Planets, Sun, Black Hole, and Moon using Python for visual learning.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CONTACT ===================== -->
+    <section id="contact" class="section-padding">
+        <div class="wrapper reveal">
+            <div class="glass-card glass-panel" style="border-color:rgba(255,61,61,0.25);box-shadow:0 0 60px rgba(255,61,61,0.08);text-align:center;">
+                <h2 class="sec-title">Connect with <span>Me</span></h2>
+                <div style="margin-bottom:2rem;">
+                    <p style="font-size:1.15rem;margin-bottom:12px;"><i class="fas fa-envelope" style="color:var(--accent);margin-right:10px;"></i>krupa.parihar25@pccoepune.org</p>
+                    <p style="font-size:1.15rem;"><i class="fas fa-phone" style="color:var(--accent);margin-right:10px;"></i>+91 7030291402</p>
+                </div>
+                <div class="social-icons" style="display:flex;justify-content:center;gap:2rem;font-size:1.8rem;">
+                    <a href="https://www.instagram.com/krupa_parihar.545" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Krupa Parihar | Engineering the Future</p>
+    </footer>
+
+    <!-- ============================================================
+         SCRIPTS
+    ============================================================ -->
+    <script>
+    /* ============================================================
+       1. THREE.JS — Floating Particles BG (optimised)
+    ============================================================ */
+    (function() {
+        const canvas = document.getElementById('three-bg');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x060608, 1);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 80;
+
+        const COUNT = 1200;
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(COUNT * 3);
+        const col = new Float32Array(COUNT * 3);
+        const colors = [
+            [1.0, 0.24, 0.24],
+            [0.83, 0.68, 0.22],
+            [0.31, 0.76, 0.97],
+            [0.1, 0.1, 0.12],
+        ];
+        for (let i = 0; i < COUNT; i++) {
+            pos[i*3]   = (Math.random() - 0.5) * 200;
+            pos[i*3+1] = (Math.random() - 0.5) * 200;
+            pos[i*3+2] = (Math.random() - 0.5) * 200;
+            const c = colors[Math.floor(Math.random() * colors.length)];
+            col[i*3] = c[0]; col[i*3+1] = c[1]; col[i*3+2] = c[2];
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+
+        const mat = new THREE.PointsMaterial({ size: 0.5, vertexColors: true, transparent: true, opacity: 0.7 });
+        const points = new THREE.Points(geo, mat);
+        scene.add(points);
+
+        const gridGeo = new THREE.PlaneGeometry(300, 300, 30, 30);
+        const gridMat = new THREE.MeshBasicMaterial({ color: 0xff3d3d, wireframe: true, transparent: true, opacity: 0.015 });
+        const grid = new THREE.Mesh(gridGeo, gridMat);
+        grid.rotation.x = -Math.PI / 2;
+        grid.position.y = -50;
+        scene.add(grid);
+
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', e => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 0.5;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 0.5;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            points.rotation.y += 0.0003;
+            points.rotation.x += 0.0001;
+            camera.position.x += (mouseX * 20 - camera.position.x) * 0.03;
+            camera.position.y += (-mouseY * 20 - camera.position.y) * 0.03;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    })();
+
+    /* ============================================================
+       2. CUSTOM CURSOR
+    ============================================================ */
+    const dot  = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    let dotX = 0, dotY = 0, ringX = 0, ringY = 0;
+
+    document.addEventListener('mousemove', e => {
+        dotX = e.clientX; dotY = e.clientY;
+    });
+
+    (function moveCursor() {
+        ringX += (dotX - ringX) * 0.12;
+        ringY += (dotY - ringY) * 0.12;
+        dot.style.left  = dotX + 'px';
+        dot.style.top   = dotY + 'px';
+        ring.style.left = ringX + 'px';
+        ring.style.top  = ringY + 'px';
+        requestAnimationFrame(moveCursor);
+    })();
+
+    document.querySelectorAll('a, button, .tag, .tech-card-adv, .proj-item').forEach(el => {
+        el.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+        el.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+    });
+
+    /* ============================================================
+       3. SCROLL REVEAL (IntersectionObserver)
+    ============================================================ */
+    const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                setTimeout(() => entry.target.classList.add('active'), 80);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08 });
+    revealEls.forEach(el => observer.observe(el));
+
+    /* ============================================================
+       4. 3D TILT EFFECT on .tilt-card
+    ============================================================ */
+    document.querySelectorAll('.tilt-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            const cx = rect.left + rect.width  / 2;
+            const cy = rect.top  + rect.height / 2;
+            const dx = (e.clientX - cx) / (rect.width  / 2);
+            const dy = (e.clientY - cy) / (rect.height / 2);
+            card.style.transform = `perspective(800px) rotateY(${dx * 6}deg) rotateX(${-dy * 6}deg) translateY(-8px)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+            card.style.transition = 'transform 0.6s cubic-bezier(0.19,1,0.22,1)';
+            setTimeout(() => card.style.transition = '', 600);
+        });
+    });
+
+    /* ============================================================
+       5. MAGNETIC BUTTONS
+    ============================================================ */
+    document.querySelectorAll('.btn-magnetic').forEach(wrap => {
+        const btn = wrap.querySelector('a');
+        wrap.addEventListener('mousemove', e => {
+            const rect = wrap.getBoundingClientRect();
+            const dx = e.clientX - rect.left - rect.width  / 2;
+            const dy = e.clientY - rect.top  - rect.height / 2;
+            btn.style.transform = `translate(${dx * 0.25}px, ${dy * 0.25}px)`;
+        });
+        wrap.addEventListener('mouseleave', () => {
+            btn.style.transform = '';
+            btn.style.transition = 'transform 0.5s cubic-bezier(0.19,1,0.22,1), box-shadow 0.3s';
+        });
+    });
+
+    /* ============================================================
+       6. HERO PARALLAX on scroll
+    ============================================================ */
+    window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        const heroText   = document.querySelector('.hero-text');
+        const heroVisual = document.querySelector('.hero-visual');
+        if (heroText)   heroText.style.transform   = `translateY(${y * 0.25}px)`;
+        if (heroVisual) heroVisual.style.transform  = `translateY(${y * 0.15}px)`;
+    }, { passive: true });
+
+    /* ============================================================
+       7. FLOWCHART TOGGLE  — original logic, unchanged
+    ============================================================ */
+    const ALL_BRANCHES = ['spotify','anime','movies','gaming','sports','novels'];
+    const fcState = {};
+    ALL_BRANCHES.forEach(k => fcState[k] = false);
+
+    function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    function toggleBranch(id) {
+        const wasOpen = fcState[id];
+
+        /* Close all */
+        ALL_BRANCHES.forEach(k => {
+            fcState[k] = false;
+            const btn = document.querySelector(`.fc-cat-btn.${k}`);
+            const pw  = document.getElementById(`panelWrapper${cap(k)}`);
+            const p   = document.getElementById(`panel${cap(k)}`);
+            if (btn) btn.classList.remove('active');
+            if (pw)  pw.classList.remove('show');
+            if (p)   p.classList.remove('show');
+        });
+
+        /* Open clicked one if it was closed */
+        if (!wasOpen) {
+            fcState[id] = true;
+            const btn = document.querySelector(`.fc-cat-btn.${id}`);
+            const pw  = document.getElementById(`panelWrapper${cap(id)}`);
+            const p   = document.getElementById(`panel${cap(id)}`);
+
+            if (btn) {
+                btn.classList.add('active');
+                /* Bounce micro-interaction */
+                btn.classList.remove('bounce');
+                void btn.offsetWidth; /* reflow to re-trigger */
+                btn.classList.add('bounce');
+                setTimeout(() => btn.classList.remove('bounce'), 500);
+            }
+            if (pw) pw.classList.add('show');
+            if (p)  {
+                p.classList.add('show');
+                setTimeout(() => p.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' }), 100);
+            }
+        }
+    }
+
+    /* Drag-scroll flowchart */
+    const fc = document.querySelector('.flowchart-container');
+    let isDown = false, startX, scrollLeft;
+    fc.addEventListener('mousedown', e => { isDown = true; fc.style.cursor = 'grabbing'; startX = e.pageX - fc.offsetLeft; scrollLeft = fc.scrollLeft; });
+    fc.addEventListener('mouseleave', () => { isDown = false; fc.style.cursor = 'default'; });
+    fc.addEventListener('mouseup',    () => { isDown = false; fc.style.cursor = 'default'; });
+    fc.addEventListener('mousemove',  e => { if (!isDown) return; e.preventDefault(); const x = e.pageX - fc.offsetLeft; fc.scrollLeft = scrollLeft - (x - startX) * 1.5; });
+
+    /* ============================================================
+       8. STAGGERED COUNTER ANIMATION for hero stats
+    ============================================================ */
+    function animateCounter(el, target, duration, decimals) {
+        let startTime = null;
+        function step(ts) {
+            if (!startTime) startTime = ts;
+            const p = Math.min((ts - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - p, 4);
+            const val = ease * target;
+            el.textContent = decimals ? val.toFixed(2) : Math.floor(val).toLocaleString();
+            if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    const statsObs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                document.querySelectorAll('.q-stat .val').forEach(el => {
+                    const raw = el.textContent.replace(',','');
+                    const isDecimal = raw.includes('.');
+                    animateCounter(el, parseFloat(raw), 1800, isDecimal);
+                });
+                statsObs.disconnect();
+            }
+        });
+    }, { threshold: 0.5 });
+    const statsEl = document.querySelector('.hero-quick-stats');
+    if (statsEl) statsObs.observe(statsEl);
+
+    /* ============================================================
+       9. NAVBAR scroll tint
+    ============================================================ */
+    window.addEventListener('scroll', () => {
+        document.querySelector('.navbar').style.background =
+            window.scrollY > 50 ? 'rgba(6,6,8,0.9)' : 'rgba(6,6,8,0.6)';
+    }, { passive: true });
+    </script>
+</body>
+</html>
